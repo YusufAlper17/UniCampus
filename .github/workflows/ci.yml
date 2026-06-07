@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: unicampus
+          POSTGRES_PASSWORD: unicampus
+          POSTGRES_DB: unicampus
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U unicampus"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://unicampus:unicampus@127.0.0.1:5432/unicampus
+      REDIS_URL: redis://127.0.0.1:6379
+      JWT_ACCESS_SECRET: ci_access_secret_change_me
+      JWT_REFRESH_SECRET: ci_refresh_secret_change_me
+      OTP_PEPPER: ci_otp_pepper_change_me
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm run typecheck
+      - run: npm run lint
+      # DB hazırlığı — migration + seed (domain leakage testi gerçek DB ister).
+      - run: npm run db:migrate -w @unicampus/api
+      - run: npm run db:seed -w @unicampus/api
+      - run: npm run test

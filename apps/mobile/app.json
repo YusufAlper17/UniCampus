@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "UniCampus",
+    "slug": "unicampus",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "unicampus",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#5B4FE8"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.unicampus.mobile"
+    },
+    "android": {
+      "package": "app.unicampus.mobile"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": ["expo-router", "expo-secure-store"],
+    "extra": {
+      "apiUrl": "http://localhost:4000/v1"
+    }
+  }
+}
