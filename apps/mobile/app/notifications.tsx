@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Stack } from 'expo-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ContentDomain, Visibility } from '@unicampus/shared-types';
+import type { Visibility } from '@unicampus/shared-types';
 import { Screen } from '../src/ui/Screen.js';
 import { Text } from '../src/ui/Text.js';
 import { SettingSwitch } from '../src/ui/SettingRow.js';
@@ -16,9 +16,8 @@ export default function NotificationSettings() {
   const toast = useToast();
   const qc = useQueryClient();
 
-  const [socialNotifications, setSocialNotifications] = useState(true);
-  const [careerNotifications, setCareerNotifications] = useState(true);
-  const [defaultFeedTab, setDefaultFeedTab] = useState<ContentDomain>('social');
+  const [notifications, setNotifications] = useState(true);
+  const [eventReminders, setEventReminders] = useState(true);
   const [dmPermission, setDmPermission] = useState<Visibility>('public');
 
   const meQuery = useQuery({ queryKey: ['me'], queryFn: getMe });
@@ -26,9 +25,8 @@ export default function NotificationSettings() {
   useEffect(() => {
     const prefs = meQuery.data?.preferences;
     if (prefs) {
-      setSocialNotifications(prefs.socialNotifications);
-      setCareerNotifications(prefs.careerNotifications);
-      setDefaultFeedTab(prefs.defaultFeedTab);
+      setNotifications(prefs.socialNotifications);
+      setEventReminders(prefs.careerNotifications);
       setDmPermission(prefs.dmPermission);
     }
   }, [meQuery.data?.preferences]);
@@ -58,23 +56,23 @@ export default function NotificationSettings() {
 
       <View style={{ gap: spacing[2], marginBottom: spacing[4] }}>
         <SettingSwitch
-          icon="heart-outline"
-          label="Sosyal bildirimler"
-          description="Beğeni, yorum, takip istekleri"
-          value={socialNotifications}
+          icon="notifications-outline"
+          label="Push bildirimleri"
+          description="Beğeni, yorum, takip, mesaj ve bağlantı istekleri"
+          value={notifications}
           onValueChange={(v) => {
-            setSocialNotifications(v);
+            setNotifications(v);
             patchPrefs({ socialNotifications: v });
           }}
           disabled={save.isPending}
         />
         <SettingSwitch
-          icon="briefcase-outline"
-          label="Kariyer bildirimler"
-          description="Bağlantı istekleri, fırsatlar"
-          value={careerNotifications}
+          icon="calendar-outline"
+          label="Etkinlik hatırlatmaları"
+          description="Katıldığın etkinlikler ve topluluk duyuruları"
+          value={eventReminders}
           onValueChange={(v) => {
-            setCareerNotifications(v);
+            setEventReminders(v);
             patchPrefs({ careerNotifications: v });
           }}
           disabled={save.isPending}
@@ -82,19 +80,6 @@ export default function NotificationSettings() {
       </View>
 
       <View style={{ gap: spacing[4] }}>
-        <OptionPicker
-          label="VARSAYILAN AKIŞ SEKMESİ"
-          value={defaultFeedTab}
-          onChange={(v) => {
-            setDefaultFeedTab(v);
-            patchPrefs({ defaultFeedTab: v });
-          }}
-          options={[
-            { value: 'social', label: 'Sosyal', description: 'Uygulama açıldığında sosyal akış' },
-            { value: 'career', label: 'Kariyer', description: 'Uygulama açıldığında kariyer akışı' },
-          ]}
-        />
-
         <OptionPicker
           label="KİMDEN MESAJ ALABİLİRSİN"
           value={dmPermission}

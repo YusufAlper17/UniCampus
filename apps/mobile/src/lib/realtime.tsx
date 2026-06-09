@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { API_URL } from './api.js';
+import { API_URL, USE_MOCK } from './api.js';
 import { useAuthStore } from './auth-store.js';
 
 type RealtimeEvent =
@@ -27,6 +27,7 @@ export function useRealtimeBridge(): void {
 
   useEffect(() => {
     if (!accessToken) return;
+    if (USE_MOCK) return; // Demo modunda gerçek WebSocket yok.
     let closed = false;
 
     function connect() {

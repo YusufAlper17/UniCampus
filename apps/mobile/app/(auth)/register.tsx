@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import type { AccountType, ContentDomain } from '@unicampus/shared-types';
+import type { AccountType } from '@unicampus/shared-types';
 import { Screen } from '../../src/ui/Screen.js';
 import { Text } from '../../src/ui/Text.js';
 import { Input } from '../../src/ui/Input.js';
@@ -27,11 +27,6 @@ const ACCOUNT_OPTIONS: { value: AccountType; label: string; desc: string; icon: 
   { value: 'team', label: 'Takım', desc: 'Spor/proje takımı', icon: 'trophy' },
 ];
 
-const FEED_OPTIONS: { value: ContentDomain; label: string; desc: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { value: 'social', label: 'Sosyal', desc: 'Arkadaşlar, etkinlikler, paylaşımlar', icon: 'sparkles' },
-  { value: 'career', label: 'Kariyer', desc: 'Projeler, fırsatlar, başarılar', icon: 'briefcase' },
-];
-
 export default function Register() {
   const router = useRouter();
   const { theme, spacing } = useTheme();
@@ -52,7 +47,6 @@ export default function Register() {
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
-  const [defaultFeedTab, setDefaultFeedTab] = useState<ContentDomain>('social');
 
   function back() {
     if (step === 0) router.back();
@@ -131,7 +125,7 @@ export default function Register() {
         username,
         displayName,
         password,
-        defaultFeedTab,
+        defaultFeedTab: 'social',
       });
       await setSession(result);
       router.replace('/(tabs)');
@@ -204,11 +198,9 @@ export default function Register() {
             username={username}
             displayName={displayName}
             password={password}
-            defaultFeedTab={defaultFeedTab}
             onChangeUsername={setUsername}
             onChangeDisplayName={setDisplayName}
             onChangePassword={setPassword}
-            onChangeFeedTab={setDefaultFeedTab}
             onFinish={handleRegister}
             loading={loading}
           />
@@ -432,11 +424,9 @@ function StepProfile({
   username,
   displayName,
   password,
-  defaultFeedTab,
   onChangeUsername,
   onChangeDisplayName,
   onChangePassword,
-  onChangeFeedTab,
   onFinish,
   loading,
 }: {
@@ -444,11 +434,9 @@ function StepProfile({
   username: string;
   displayName: string;
   password: string;
-  defaultFeedTab: ContentDomain;
   onChangeUsername: (v: string) => void;
   onChangeDisplayName: (v: string) => void;
   onChangePassword: (v: string) => void;
-  onChangeFeedTab: (v: ContentDomain) => void;
   onFinish: () => void;
   loading: boolean;
 }) {
@@ -477,22 +465,6 @@ function StepProfile({
         onChangeText={onChangePassword}
         leftIcon="lock-closed-outline"
       />
-
-      <Text variant="caption" tone="secondary" style={{ marginTop: spacing[1] }}>
-        Ne için buradasın? (Varsayılan akışın)
-      </Text>
-      <View style={{ gap: spacing[2] }}>
-        {FEED_OPTIONS.map((o) => (
-          <SelectCard
-            key={o.value}
-            icon={o.icon}
-            label={o.label}
-            desc={o.desc}
-            active={defaultFeedTab === o.value}
-            onPress={() => onChangeFeedTab(o.value)}
-          />
-        ))}
-      </View>
 
       <Button label="Kaydı Tamamla" loading={loading} onPress={onFinish} style={{ marginTop: spacing[2] }} />
     </View>

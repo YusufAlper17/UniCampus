@@ -43,7 +43,7 @@ export default function ComposeProject() {
         demoUrl: demoUrl.trim() || undefined,
         mediaUrls: [],
       });
-      await qc.invalidateQueries({ queryKey: ['feed', 'career'] });
+      await qc.invalidateQueries({ queryKey: ['feed'] });
       toast.show('Proje paylaşıldı', 'success');
       router.back();
     } catch (err) {

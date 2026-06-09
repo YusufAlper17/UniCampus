@@ -30,7 +30,7 @@ export default function ComposeMilestone() {
         title: title.trim(),
         description: description.trim() || undefined,
       });
-      await qc.invalidateQueries({ queryKey: ['feed', 'career'] });
+      await qc.invalidateQueries({ queryKey: ['feed'] });
       toast.show('Başarı paylaşıldı', 'success');
       router.back();
     } catch (err) {

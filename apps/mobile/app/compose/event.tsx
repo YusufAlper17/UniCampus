@@ -58,7 +58,7 @@ export default function ComposeEvent() {
         participationType,
         scope: 'individual',
       });
-      await qc.invalidateQueries({ queryKey: ['feed', 'social'] });
+      await qc.invalidateQueries({ queryKey: ['feed'] });
       toast.show('Etkinlik paylaşıldı', 'success');
       router.back();
     } catch (err) {

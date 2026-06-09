@@ -4,6 +4,10 @@ import { useAuthStore } from './auth-store.js';
 export const API_URL =
   (Constants.expoConfig?.extra?.apiUrl as string | undefined) ?? 'http://localhost:4000/v1';
 
+// Demo modu: gerçek backend olmadan zengin sahte verilerle çalışır.
+// Gerçek API'ye bağlanmak için false yap.
+export const USE_MOCK = true;
+
 export class ApiError extends Error {
   code: string;
   status: number;
@@ -46,6 +50,15 @@ async function refreshAccessToken(): Promise<boolean> {
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, auth = true, retry = true } = options;
+
+  // Demo modu: isteği bellek-içi sahte backend'e yönlendir.
+  if (USE_MOCK) {
+    const { handleMock } = await import('./mock/backend.js');
+    // Gerçekçi küçük gecikme.
+    await new Promise((res) => setTimeout(res, 140 + Math.random() * 160));
+    return handleMock<T>(method, path, body);
+  }
+
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
   if (auth) {

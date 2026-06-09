@@ -91,8 +91,16 @@ export interface PollData {
   myVotes: UUID[];
 }
 
+export interface EventAttendee {
+  id: UUID;
+  displayName: string;
+  username?: string;
+  avatarUrl?: string;
+}
+
 export interface EventData {
   id: UUID;
+  title?: string;
   startsAt: ISODateString;
   endsAt?: ISODateString;
   locationText?: string;
@@ -103,6 +111,22 @@ export interface EventData {
   participationType: ParticipationType;
   scope: 'individual' | 'club' | 'team';
   myStatus?: 'joined' | 'pending' | 'invited' | 'cancelled' | null;
+  /** Katılımcı önizleme listesi (etkinlik sahibi gösterime izin verdiyse). */
+  attendees?: EventAttendee[];
+  /** Katılımcı listesinin herkese açık olup olmadığı. */
+  attendeesVisible?: boolean;
+}
+
+/** Tekil medya öğesi — fotoğraf veya video (poster + süre ile). */
+export interface MediaItem {
+  type: 'image' | 'video';
+  url: string;
+  /** Video için kapak görseli (oynatılmadan gösterilir). */
+  poster?: string;
+  /** Video süresi (saniye) — rozet olarak gösterilir. */
+  durationSec?: number;
+  width?: number;
+  height?: number;
 }
 
 export interface Post {
@@ -114,12 +138,16 @@ export interface Post {
   contentDomain: ContentDomain;
   content?: string;
   mediaUrls: string[];
+  /** Zengin medya (fotoğraf/video). Varsa mediaUrls yerine bu kullanılır. */
+  media?: MediaItem[];
   visibility: Visibility;
   likeCount: number;
   commentCount: number;
   likedByMe?: boolean;
+  savedByMe?: boolean;
   poll?: PollData;
   event?: EventData;
+  location?: string;
   createdAt: ISODateString;
 }
 
@@ -181,10 +209,21 @@ export interface Community {
   name: string;
   description?: string;
   coverUrl?: string;
+  avatarUrl?: string;
   category?: string;
   visibility: CommunityVisibility;
   joinMode: JoinMode;
   memberCount: number;
+  /** Topluluğun düzenlediği toplam etkinlik sayısı. */
+  eventCount?: number;
+  /** Etkinliklere katılan toplam kişi sayısı. */
+  totalEventAttendees?: number;
+  /** Son 7 günde katılan yeni üye sayısı (trend göstergesi). */
+  weeklyGrowth?: number;
+  /** Aktif (çevrimiçi/son 24s) üye sayısı. */
+  activeMemberCount?: number;
+  /** Trend sıralaması için skor. */
+  trendingScore?: number;
   createdAt: ISODateString;
 }
 

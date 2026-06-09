@@ -60,7 +60,7 @@ export default function ComposePoll() {
         multiChoice: multiChoice === 'multi',
         isAnonymous: true,
       });
-      await qc.invalidateQueries({ queryKey: ['feed', 'social'] });
+      await qc.invalidateQueries({ queryKey: ['feed'] });
       toast.show('Anket paylaşıldı', 'success');
       router.back();
     } catch (err) {

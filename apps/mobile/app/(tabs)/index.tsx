@@ -1,64 +1,53 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import { Pressable } from 'react-native';
 import {
   useInfiniteQuery,
   useQuery,
   useQueryClient,
   type InfiniteData,
 } from '@tanstack/react-query';
-import type { ContentDomain, FeedItem } from '@unicampus/shared-types';
+import type { EventData, FeedItem, PollData, StoryGroup } from '@unicampus/shared-types';
 import { Text } from '../../src/ui/Text.js';
-import { SegmentedControl } from '../../src/ui/SegmentedControl.js';
 import { EmptyState } from '../../src/ui/EmptyState.js';
 import { PostCard } from '../../src/ui/PostCard.js';
 import { AdCard } from '../../src/ui/AdCard.js';
 import { StoryRing } from '../../src/ui/StoryRing.js';
-import { TrendChip } from '../../src/ui/TrendChip.js';
+import { IconButton } from '../../src/ui/IconButton.js';
 import { Skeleton } from '../../src/ui/Skeleton.js';
 import { useTheme } from '../../src/lib/theme.js';
 import {
   getFeed,
-  getTrending,
   likePost,
   unlikePost,
   type FeedPage,
 } from '../../src/features/posts/api.js';
+import { getFollowRequests } from '../../src/features/social/api.js';
 import { votePoll } from '../../src/features/polls/api.js';
 import { joinEvent } from '../../src/features/events/api.js';
 import { getStories } from '../../src/features/stories/api.js';
-import type { EventData, PollData, StoryGroup } from '@unicampus/shared-types';
+import { getConversations } from '../../src/features/messaging/api.js';
 
 export default function HomeFeed() {
   const { theme, spacing } = useTheme();
   const router = useRouter();
   const qc = useQueryClient();
-  const [domain, setDomain] = useState<ContentDomain>('social');
-  const [joiningEventId, setJoiningEventId] = useState<string | null>(null);
 
   const feedQuery = useInfiniteQuery({
-    queryKey: ['feed', domain],
-    queryFn: ({ pageParam }) => getFeed(domain, pageParam),
+    queryKey: ['feed'],
+    queryFn: ({ pageParam }) => getFeed(pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (last: FeedPage) => last.nextCursor,
   });
 
-  const trendingQuery = useQuery({
-    queryKey: ['trending'],
-    queryFn: getTrending,
-    enabled: domain === 'social',
-  });
-
-  const storiesQuery = useQuery({
-    queryKey: ['stories'],
-    queryFn: getStories,
-    enabled: domain === 'social',
-  });
+  const storiesQuery = useQuery({ queryKey: ['stories'], queryFn: getStories });
+  const convQuery = useQuery({ queryKey: ['conversations'], queryFn: getConversations });
+  const followReqQuery = useQuery({ queryKey: ['follow-requests'], queryFn: getFollowRequests });
 
   const items: FeedItem[] = feedQuery.data?.pages.flatMap((p) => p.items) ?? [];
+  const unread = (convQuery.data?.items ?? []).reduce((s, c) => s + c.unreadCount, 0);
+  const followReqCount = followReqQuery.data?.items.length ?? 0;
 
   const storyGroups: StoryGroup[] = storiesQuery.data?.items ?? [];
   const storyItems = storyGroups.map((g) => ({
@@ -87,8 +76,7 @@ export default function HomeFeed() {
 
   const toggleLike = useCallback(
     async (postId: string, liked: boolean) => {
-      // Optimistic cache güncellemesi.
-      qc.setQueryData<InfiniteData<FeedPage>>(['feed', domain], (old) => {
+      qc.setQueryData<InfiniteData<FeedPage>>(['feed'], (old) => {
         if (!old) return old;
         return {
           ...old,
@@ -116,12 +104,12 @@ export default function HomeFeed() {
         void feedQuery.refetch();
       }
     },
-    [domain, qc, feedQuery],
+    [qc, feedQuery],
   );
 
   const patchPost = useCallback(
     (postId: string, patch: { poll?: PollData; event?: EventData }) => {
-      qc.setQueryData<InfiniteData<FeedPage>>(['feed', domain], (old) => {
+      qc.setQueryData<InfiniteData<FeedPage>>(['feed'], (old) => {
         if (!old) return old;
         return {
           ...old,
@@ -136,7 +124,7 @@ export default function HomeFeed() {
         };
       });
     },
-    [domain, qc],
+    [qc],
   );
 
   const vote = useCallback(
@@ -153,7 +141,6 @@ export default function HomeFeed() {
 
   const join = useCallback(
     async (postId: string, event: EventData) => {
-      setJoiningEventId(event.id);
       try {
         const { status } = await joinEvent(event.id);
         patchPost(postId, {
@@ -165,8 +152,6 @@ export default function HomeFeed() {
         });
       } catch {
         void feedQuery.refetch();
-      } finally {
-        setJoiningEventId(null);
       }
     },
     [patchPost, feedQuery],
@@ -183,31 +168,18 @@ export default function HomeFeed() {
           paddingVertical: spacing[2],
         }}
       >
-        <Text variant="headingMd" tone="brand">
+        <Text variant="headingLg" tone="brand" weight="800">
           UniCampus
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[3] }}>
-          <Pressable onPress={() => router.push('/reels')} hitSlop={8}>
-            <Ionicons name="play-circle-outline" size={24} color={theme.textPrimary} />
-          </Pressable>
-          <Pressable onPress={() => router.push('/communities')} hitSlop={8}>
-            <Ionicons name="people-outline" size={24} color={theme.textPrimary} />
-          </Pressable>
-          <Pressable onPress={() => router.push('/messages')} hitSlop={8}>
-            <Ionicons name="chatbubble-ellipses-outline" size={24} color={theme.textPrimary} />
-          </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
+          <IconButton name="play-circle-outline" onPress={() => router.push('/reels')} />
+          <IconButton name="heart-outline" badge={followReqCount} onPress={() => router.push('/follow-requests')} />
+          <IconButton
+            name="chatbubble-ellipses-outline"
+            badge={unread}
+            onPress={() => router.push('/messages')}
+          />
         </View>
-      </View>
-
-      <View style={{ paddingHorizontal: spacing[3], paddingBottom: spacing[1] }}>
-        <SegmentedControl
-          segments={[
-            { value: 'social', label: 'Sosyal' },
-            { value: 'career', label: 'Kariyer' },
-          ]}
-          value={domain}
-          onChange={setDomain}
-        />
       </View>
 
       <FlatList
@@ -229,7 +201,6 @@ export default function HomeFeed() {
                   : undefined
               }
               onJoinEvent={item.post.event ? () => join(item.post.id, item.post.event!) : undefined}
-              joiningEvent={!!item.post.event && joiningEventId === item.post.event.id}
             />
           ) : item.type === 'ad' ? (
             <AdCard
@@ -241,34 +212,19 @@ export default function HomeFeed() {
           ) : null
         }
         ListHeaderComponent={
-          domain === 'social' ? (
-            <View style={{ borderBottomWidth: 1, borderBottomColor: theme.border }}>
-              <StoryRing
-                stories={storyItems}
-                onAddStory={() => router.push('/story/create')}
-                onOpenStory={openStory}
-              />
-              {trendingQuery.data?.items.length ? (
-                <FlatList
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  data={trendingQuery.data.items}
-                  keyExtractor={(t) => t.tag}
-                  contentContainerStyle={{ paddingHorizontal: spacing[3], gap: 8, paddingBottom: spacing[2] }}
-                  renderItem={({ item: t }) => (
-                    <TrendChip
-                      tag={t.tag}
-                      count={t.usageCount}
-                      onPress={() => router.push(`/hashtag/${t.tag}`)}
-                    />
-                  )}
-                />
-              ) : null}
-            </View>
-          ) : null
+          <View style={{ borderBottomWidth: 1, borderBottomColor: theme.border }}>
+            <StoryRing
+              stories={storyItems}
+              onAddStory={() => router.push('/story/create')}
+              onOpenStory={openStory}
+            />
+          </View>
         }
         refreshControl={
-          <RefreshControl refreshing={feedQuery.isRefetching} onRefresh={() => feedQuery.refetch()} />
+          <RefreshControl
+            refreshing={feedQuery.isRefetching}
+            onRefresh={() => feedQuery.refetch()}
+          />
         }
         onEndReachedThreshold={0.5}
         onEndReached={() => {
@@ -279,13 +235,9 @@ export default function HomeFeed() {
             <FeedSkeleton />
           ) : (
             <EmptyState
-              icon={domain === 'social' ? 'sparkles-outline' : 'briefcase-outline'}
-              title={domain === 'social' ? 'Akış boş' : 'Kariyer akışı boş'}
-              description={
-                domain === 'social'
-                  ? 'İlk gönderiyi sen paylaş veya birini takip et.'
-                  : 'Bağlantılarının projeleri ve fırsatlar burada görünür. Reklamsız.'
-              }
+              icon="sparkles-outline"
+              title="Akış boş"
+              description="İlk gönderiyi sen paylaş veya birini takip et."
               actionLabel="Paylaşım yap"
               onAction={() => router.push('/create')}
             />
@@ -312,7 +264,7 @@ function FeedSkeleton() {
           </View>
           <Skeleton height={14} />
           <Skeleton height={14} width="80%" />
-          <Skeleton height={200} radius={14} />
+          <Skeleton height={300} radius={14} />
         </View>
       ))}
     </View>

@@ -1,5 +1,9 @@
-import type { AccountType, AccountVisibility, Visibility } from '@unicampus/shared-types';
+import type { AccountType, AccountVisibility, Post, Visibility } from '@unicampus/shared-types';
 import { api } from '../../lib/api.js';
+
+export function getUserPosts(userId: string) {
+  return api.get<{ items: Post[] }>(`/users/${userId}/posts`);
+}
 
 export interface ProfileUser {
   id: string;
@@ -50,6 +54,21 @@ export interface MeResponse {
   user: ProfileUser;
   preferences: Preferences | null;
   academic: AcademicProfile | null;
+  featuredCommunities?: FeaturedCommunity[];
+  myCommunityIds?: string[];
+}
+
+export interface FeaturedCommunity {
+  id: string;
+  name: string;
+  avatarUrl?: string;
+  category?: string;
+}
+
+export function updateFeaturedCommunities(communityIds: string[]) {
+  return api.patch<{ featuredCommunities: FeaturedCommunity[] }>('/users/me/featured-communities', {
+    communityIds,
+  });
 }
 
 export function getMe() {
@@ -66,7 +85,11 @@ export interface PublicAcademic {
 }
 
 export function getProfile(username: string) {
-  return api.get<{ user: ProfileUser; academic: PublicAcademic | null }>(`/users/${username}`);
+  return api.get<{
+    user: ProfileUser;
+    academic: PublicAcademic | null;
+    featuredCommunities?: FeaturedCommunity[];
+  }>(`/users/${username}`);
 }
 
 export interface UpdateProfileBody {

@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { compactNumber } from '../../src/lib/format.js';
 import { Text } from '../../src/ui/Text.js';
 import { Avatar } from '../../src/ui/Avatar.js';
 import { Badge } from '../../src/ui/Badge.js';
@@ -67,6 +69,9 @@ export default function CommunityDetailScreen() {
       await Promise.all([
         refetch(),
         qc.invalidateQueries({ queryKey: ['communities'] }),
+        qc.invalidateQueries({ queryKey: ['communities-hub'] }),
+        qc.invalidateQueries({ queryKey: ['communities-feed'] }),
+        qc.invalidateQueries({ queryKey: ['me'] }),
       ]);
     } catch (err) {
       toast.show(err instanceof ApiError ? err.message : 'İşlem başarısız', 'error');
@@ -80,7 +85,13 @@ export default function CommunityDetailScreen() {
     try {
       await leaveCommunity(communityId);
       toast.show('Topluluktan ayrıldın', 'success');
-      await Promise.all([refetch(), qc.invalidateQueries({ queryKey: ['communities'] })]);
+      await Promise.all([
+        refetch(),
+        qc.invalidateQueries({ queryKey: ['communities'] }),
+        qc.invalidateQueries({ queryKey: ['communities-hub'] }),
+        qc.invalidateQueries({ queryKey: ['communities-feed'] }),
+        qc.invalidateQueries({ queryKey: ['me'] }),
+      ]);
     } catch (err) {
       toast.show(err instanceof ApiError ? err.message : 'İşlem başarısız', 'error');
     } finally {
@@ -137,30 +148,58 @@ export default function CommunityDetailScreen() {
     >
       <Stack.Screen options={{ title: community.name, headerShown: true }} />
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[3] }}>
-        <View
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 16,
-            backgroundColor: theme.primary + '22',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Ionicons name="people" size={32} color={theme.primary} />
+      <View style={{ borderRadius: 16, overflow: 'hidden', backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border }}>
+        <View style={{ height: 120, backgroundColor: theme.primary + '22' }}>
+          {community.coverUrl ? (
+            <Image source={{ uri: community.coverUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+          ) : null}
         </View>
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text variant="headingMd">{community.name}</Text>
-          <Text variant="caption" tone="muted">
-            {community.memberCount} üye
+        <View style={{ paddingHorizontal: spacing[3], paddingBottom: spacing[3] }}>
+          <View
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: 18,
+              marginTop: -36,
+              backgroundColor: theme.surface2,
+              borderWidth: 3,
+              borderColor: theme.surface,
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+            }}
+          >
+            {community.avatarUrl ? (
+              <Image source={{ uri: community.avatarUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+            ) : (
+              <Ionicons name="people" size={34} color={theme.primary} />
+            )}
+          </View>
+          <Text variant="headingMd" style={{ marginTop: spacing[2] }}>
+            {community.name}
           </Text>
+          {community.category ? (
+            <Text variant="caption" tone="brand" weight="600" style={{ marginTop: 2 }}>
+              {community.category}
+            </Text>
+          ) : null}
+
+          <View style={{ flexDirection: 'row', gap: spacing[3], marginTop: spacing[3] }}>
+            <StatBox value={community.memberCount} label="Üye" />
+            <View style={{ width: 1, backgroundColor: theme.border }} />
+            <StatBox value={community.eventCount ?? 0} label="Etkinlik" />
+            <View style={{ width: 1, backgroundColor: theme.border }} />
+            <StatBox value={community.totalEventAttendees ?? 0} label="Katılım" />
+          </View>
         </View>
       </View>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Badge label={VISIBILITY_LABEL[community.visibility]} tone="info" icon="eye" />
         <Badge label={JOINMODE_LABEL[community.joinMode]} tone="neutral" icon="enter" />
+        {community.activeMemberCount != null ? (
+          <Badge label={`${compactNumber(community.activeMemberCount)} aktif`} tone="success" icon="ellipse" />
+        ) : null}
       </View>
 
       {community.description ? <Text tone="secondary">{community.description}</Text> : null}
@@ -175,30 +214,53 @@ export default function CommunityDetailScreen() {
 
       {isActive && community.channels?.length ? (
         <View style={{ gap: spacing[2] }}>
-          <Text variant="caption" tone="muted">
-            Kanallar
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text weight="700">Kanallar</Text>
+            <Text variant="caption" tone="muted">
+              {community.channels.length} grup
+            </Text>
+          </View>
           {community.channels.map((ch) => (
             <Pressable
               key={ch.id}
               onPress={() =>
-                router.push({ pathname: `/community/channel/${ch.id}`, params: { name: ch.name } })
+                router.push({ pathname: `/community/channel/${ch.id}`, params: { name: ch.name, communityId: communityId } })
               }
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 10,
-                paddingVertical: 12,
+                gap: 12,
+                paddingVertical: 14,
                 paddingHorizontal: 14,
-                backgroundColor: theme.surface2,
-                borderRadius: 12,
+                backgroundColor: theme.surface,
+                borderRadius: 14,
+                borderWidth: 1,
+                borderColor: theme.border,
               }}
             >
-              <Ionicons name="chatbox-ellipses-outline" size={18} color={theme.textMuted} />
-              <Text weight="600" style={{ flex: 1 }}>
-                {ch.name}
-              </Text>
-              <Ionicons name="chevron-forward" size={16} color={theme.textMuted} />
+              <View
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 14,
+                  backgroundColor: ch.isDefault ? theme.primary + '22' : theme.surface2,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons
+                  name={ch.isDefault ? 'megaphone' : 'chatbubbles'}
+                  size={22}
+                  color={ch.isDefault ? theme.primary : theme.textMuted}
+                />
+              </View>
+              <View style={{ flex: 1, gap: 2 }}>
+                <Text weight="700">{ch.name}</Text>
+                <Text variant="caption" tone="muted" numberOfLines={1}>
+                  {ch.description ?? (ch.isDefault ? 'Duyurular ve önemli bilgiler' : 'Sohbet kanalı')}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
             </Pressable>
           ))}
         </View>
@@ -254,10 +316,13 @@ export default function CommunityDetailScreen() {
 
       {isActive && membersQuery.data?.items.length ? (
         <View style={{ gap: spacing[2] }}>
-          <Text variant="caption" tone="muted">
-            Üyeler ({membersQuery.data.items.length})
-          </Text>
-          {membersQuery.data.items.map((m) => (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text weight="700">Üyeler</Text>
+            <Text variant="caption" tone="muted">
+              {membersQuery.data.items.length} kişi
+            </Text>
+          </View>
+          {membersQuery.data.items.slice(0, 12).map((m) => (
             <Pressable
               key={m.userId}
               onPress={() => m.username && router.push(`/u/${m.username}`)}
@@ -278,5 +343,18 @@ export default function CommunityDetailScreen() {
         </View>
       ) : null}
     </ScrollView>
+  );
+}
+
+function StatBox({ value, label }: { value: number; label: string }) {
+  return (
+    <View style={{ alignItems: 'center', flex: 1 }}>
+      <Text variant="headingMd" weight="700">
+        {compactNumber(value)}
+      </Text>
+      <Text variant="caption" tone="muted">
+        {label}
+      </Text>
+    </View>
   );
 }

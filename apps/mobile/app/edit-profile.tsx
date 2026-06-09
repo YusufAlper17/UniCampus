@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -10,7 +11,8 @@ import { Input } from '../src/ui/Input.js';
 import { Button } from '../src/ui/Button.js';
 import { useToast } from '../src/ui/Toast.js';
 import { useTheme } from '../src/lib/theme.js';
-import { getMe, updateProfile, updateStatus } from '../src/features/users/api.js';
+import { getMe, updateFeaturedCommunities, updateProfile, updateStatus } from '../src/features/users/api.js';
+import { getCommunities } from '../src/features/communities/api.js';
 import { ApiError } from '../src/lib/api.js';
 
 const STATUS_EMOJIS = ['😀', '📚', '💻', '☕', '🎯', '🔥', '😴', '🎧', '🏀', '✈️'];
@@ -21,6 +23,7 @@ export default function EditProfile() {
   const toast = useToast();
   const qc = useQueryClient();
   const { data } = useQuery({ queryKey: ['me'], queryFn: getMe });
+  const mineQuery = useQuery({ queryKey: ['communities', 'mine'], queryFn: () => getCommunities({ mine: true }) });
 
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
@@ -28,6 +31,7 @@ export default function EditProfile() {
   const [statusEmoji, setStatusEmoji] = useState('');
   const [statusText, setStatusText] = useState('');
   const [visibility, setVisibility] = useState<AccountVisibility>('public');
+  const [featuredIds, setFeaturedIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -38,8 +42,17 @@ export default function EditProfile() {
       setStatusEmoji(data.user.statusEmoji ?? '');
       setStatusText(data.user.statusText ?? '');
       setVisibility(data.user.accountVisibility);
+      setFeaturedIds((data.featuredCommunities ?? []).map((c) => c.id));
     }
   }, [data]);
+
+  function toggleCommunity(id: string) {
+    setFeaturedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= 6) return prev;
+      return [...prev, id];
+    });
+  }
 
   async function save() {
     setSaving(true);
@@ -49,6 +62,7 @@ export default function EditProfile() {
         statusText: statusText.trim() || null,
         statusEmoji: statusText.trim() ? statusEmoji || null : null,
       });
+      await updateFeaturedCommunities(featuredIds);
       await qc.invalidateQueries({ queryKey: ['me'] });
       toast.show('Profil güncellendi', 'success');
       router.back();
@@ -59,26 +73,78 @@ export default function EditProfile() {
     }
   }
 
+  const myCommunities = mineQuery.data?.items ?? [];
+
   return (
     <Screen scroll>
       <Stack.Screen options={{ title: 'Profili Düzenle' }} />
       <View style={{ gap: spacing[3] }}>
         <Text variant="headingLg">Profili Düzenle</Text>
         <Input label="Ad Soyad" value={displayName} onChangeText={setDisplayName} />
+        <Input label="Biyografi" value={bio} onChangeText={setBio} placeholder="Kendinden bahset" multiline />
         <Input
-          label="Biyografi"
-          value={bio}
-          onChangeText={setBio}
-          placeholder="Kendinden bahset"
-          multiline
-        />
-        <Input
-          label="Kariyer başlığı"
+          label="Başlık"
           value={careerHeadline}
           onChangeText={setCareerHeadline}
-          placeholder="Örn. Bilgisayar Müh. öğrencisi · Frontend"
-          leftIcon="briefcase-outline"
+          placeholder="Örn. Bilgisayar Müh. öğrencisi"
+          leftIcon="school-outline"
         />
+
+        <View style={{ gap: spacing[2] }}>
+          <Text variant="caption" tone="muted">
+            Profilde gösterilecek topluluklar (en fazla 6)
+          </Text>
+          {myCommunities.length ? (
+            myCommunities.map((c) => {
+              const selected = featuredIds.includes(c.id);
+              return (
+                <Pressable
+                  key={c.id}
+                  onPress={() => toggleCommunity(c.id)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: 12,
+                    borderRadius: 12,
+                    borderWidth: 1.5,
+                    borderColor: selected ? theme.primary : theme.border,
+                    backgroundColor: selected ? theme.primary + '10' : theme.surface2,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 10,
+                      overflow: 'hidden',
+                      backgroundColor: theme.primary + '22',
+                    }}
+                  >
+                    {c.avatarUrl ? (
+                      <Image source={{ uri: c.avatarUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                    ) : (
+                      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                        <Ionicons name="people" size={18} color={theme.primary} />
+                      </View>
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text weight="600">{c.name}</Text>
+                    <Text variant="caption" tone="muted">
+                      {c.category ?? 'Topluluk'}
+                    </Text>
+                  </View>
+                  {selected ? <Ionicons name="checkmark-circle" size={22} color={theme.primary} /> : null}
+                </Pressable>
+              );
+            })
+          ) : (
+            <Text variant="caption" tone="muted">
+              Henüz üye olduğun topluluk yok. Keşfet sekmesinden katılabilirsin.
+            </Text>
+          )}
+        </View>
 
         <View style={{ gap: spacing[2] }}>
           <Text variant="caption" tone="muted">
@@ -133,9 +199,7 @@ export default function EditProfile() {
             <View>
               <Text weight="600">{visibility === 'private' ? 'Gizli hesap' : 'Açık hesap'}</Text>
               <Text variant="caption" tone="muted">
-                {visibility === 'private'
-                  ? 'Sadece onayladıkların takip eder'
-                  : 'Herkes takip edebilir'}
+                {visibility === 'private' ? 'Sadece onayladıkların takip eder' : 'Herkes takip edebilir'}
               </Text>
             </View>
           </View>

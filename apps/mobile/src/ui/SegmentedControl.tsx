@@ -14,7 +14,7 @@ interface SegmentedControlProps<T extends string> {
   onChange: (value: T) => void;
 }
 
-// Dual feed sekme geçişi (Sosyal | Kariyer) ve genel segment kontrolü.
+// Genel amaçlı segment kontrolü (sekme/filtre geçişleri için).
 export function SegmentedControl<T extends string>({
   segments,
   value,

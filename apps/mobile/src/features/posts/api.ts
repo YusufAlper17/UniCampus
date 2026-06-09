@@ -6,14 +6,14 @@ export interface FeedPage {
   nextCursor: string | null;
 }
 
-export function getFeed(domain: ContentDomain, cursor?: string | null) {
-  const params = new URLSearchParams({ domain });
+export function getFeed(cursor?: string | null) {
+  const params = new URLSearchParams();
   if (cursor) params.set('cursor', cursor);
   return api.get<FeedPage>(`/feed?${params.toString()}`);
 }
 
 export interface CreatePostBody {
-  contentDomain: ContentDomain;
+  contentDomain?: ContentDomain;
   type?: PostType;
   content?: string;
   mediaUrls?: string[];

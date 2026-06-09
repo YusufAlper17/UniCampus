@@ -1,49 +1,76 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, TextInput, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import type { ContentDomain } from '@unicampus/shared-types';
 import { Text } from '../../src/ui/Text.js';
+import { Avatar } from '../../src/ui/Avatar.js';
 import { Button } from '../../src/ui/Button.js';
 import { useToast } from '../../src/ui/Toast.js';
 import { useTheme } from '../../src/lib/theme.js';
 import { createPost } from '../../src/features/posts/api.js';
+import { getMe } from '../../src/features/users/api.js';
 import { ApiError } from '../../src/lib/api.js';
+import { useQuery } from '@tanstack/react-query';
+
+// Demoda eklenebilecek örnek görseller.
+const DEMO_PHOTOS = [
+  'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=900&q=70',
+  'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=900&q=70',
+  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=70',
+  'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=900&q=70',
+  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=70',
+  'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=900&q=70',
+];
+
+const QUICK: { icon: keyof typeof Ionicons.glyphMap; label: string; route: string; color: string }[] = [
+  { icon: 'stats-chart', label: 'Anket', route: '/compose/poll', color: '#5B4FE8' },
+  { icon: 'calendar', label: 'Etkinlik', route: '/compose/event', color: '#3B82F6' },
+  { icon: 'rocket', label: 'Proje', route: '/compose/project', color: '#10B981' },
+  { icon: 'trophy', label: 'Başarı', route: '/compose/milestone', color: '#F59E0B' },
+  { icon: 'megaphone', label: 'Fırsat', route: '/compose/opportunity', color: '#EF4444' },
+];
 
 export default function CreateTab() {
-  const { theme, spacing } = useTheme();
+  const { theme, spacing, radius } = useTheme();
   const router = useRouter();
   const toast = useToast();
   const qc = useQueryClient();
 
-  // Domain ilk adımda seçilir ve değiştirilemez (sızıntı önlemi).
-  const [domain, setDomain] = useState<ContentDomain | null>(null);
-  const [kind, setKind] = useState<'text' | null>(null);
   const [content, setContent] = useState('');
+  const [photos, setPhotos] = useState<string[]>([]);
   const [posting, setPosting] = useState(false);
 
-  function reset() {
-    setDomain(null);
-    setKind(null);
-    setContent('');
+  const meQuery = useQuery({ queryKey: ['me'], queryFn: getMe });
+  const me = meQuery.data?.user;
+
+  function addPhoto() {
+    if (photos.length >= 4) {
+      toast.show('En fazla 4 görsel', 'info');
+      return;
+    }
+    const next = DEMO_PHOTOS[photos.length % DEMO_PHOTOS.length];
+    setPhotos((p) => [...p, next]);
   }
 
-  function goCompose(route: string) {
-    reset();
-    router.push(route as never);
+  function removePhoto(i: number) {
+    setPhotos((p) => p.filter((_, idx) => idx !== i));
   }
 
   async function submit() {
-    if (!domain || !content.trim()) return;
+    if (!content.trim() && photos.length === 0) return;
     setPosting(true);
     try {
-      await createPost({ contentDomain: domain, content: content.trim() });
-      await qc.invalidateQueries({ queryKey: ['feed', domain] });
-      await qc.invalidateQueries({ queryKey: ['trending'] });
-      toast.show('Paylaşıldı', 'success');
-      reset();
+      await createPost({ content: content.trim(), mediaUrls: photos });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ['feed'] }),
+        qc.invalidateQueries({ queryKey: ['trending'] }),
+        qc.invalidateQueries({ queryKey: ['me'] }),
+      ]);
+      toast.show('Paylaşıldı 🎉', 'success');
+      setContent('');
+      setPhotos([]);
       router.replace('/(tabs)');
     } catch (err) {
       toast.show(err instanceof ApiError ? err.message : 'Paylaşılamadı', 'error');
@@ -52,61 +79,7 @@ export default function CreateTab() {
     }
   }
 
-  if (!domain) {
-    return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: theme.bg }}>
-        <View style={{ padding: spacing[3], gap: spacing[3], flex: 1 }}>
-          <Text variant="headingLg">Ne paylaşmak istersin?</Text>
-          <Text tone="muted">Önce evreni seç. Sosyal ve kariyer içerikleri ayrı akışlarda görünür.</Text>
-
-          <DomainChoice
-            icon="sparkles"
-            title="Sosyal"
-            desc="Gönderi, fotoğraf, etkinlik, anket"
-            color={theme.primary}
-            onPress={() => setDomain('social')}
-          />
-          <DomainChoice
-            icon="briefcase"
-            title="Kariyer"
-            desc="Proje, başarı, fırsat — reklamsız akış"
-            color={theme.info}
-            onPress={() => setDomain('career')}
-          />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (!kind) {
-    const isSocial = domain === 'social';
-    const accent = isSocial ? theme.primary : theme.info;
-    return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: theme.bg }}>
-        <View style={{ padding: spacing[3], gap: spacing[3], flex: 1 }}>
-          <Pressable onPress={reset} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Ionicons name="chevron-back" size={22} color={theme.textSecondary} />
-            <Text tone="secondary">Geri</Text>
-          </Pressable>
-          <Text variant="headingLg">{isSocial ? 'Sosyal paylaşım' : 'Kariyer paylaşımı'}</Text>
-
-          <DomainChoice icon="create" title="Gönderi" desc="Yazı ve fotoğraf" color={accent} onPress={() => setKind('text')} />
-          {isSocial ? (
-            <>
-              <DomainChoice icon="calendar" title="Etkinlik" desc="Tarih, konum, katılım" color={accent} onPress={() => goCompose('/compose/event')} />
-              <DomainChoice icon="stats-chart" title="Anket" desc="Soru + seçenekler" color={accent} onPress={() => goCompose('/compose/poll')} />
-            </>
-          ) : (
-            <>
-              <DomainChoice icon="rocket" title="Proje" desc="Showcase + tech stack" color={accent} onPress={() => goCompose('/compose/project')} />
-              <DomainChoice icon="trophy" title="Başarı" desc="Milestone paylaş" color={accent} onPress={() => goCompose('/compose/milestone')} />
-              <DomainChoice icon="megaphone" title="Fırsat" desc="Staj/iş ilanı (moderasyonlu)" color={accent} onPress={() => goCompose('/compose/opportunity')} />
-            </>
-          )}
-        </View>
-      </SafeAreaView>
-    );
-  }
+  const canPost = content.trim().length > 0 || photos.length > 0;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: theme.bg }}>
@@ -122,130 +95,109 @@ export default function CreateTab() {
             borderBottomColor: theme.border,
           }}
         >
-          <Pressable onPress={() => setKind(null)} hitSlop={8}>
-            <Ionicons name="chevron-back" size={26} color={theme.textPrimary} />
-          </Pressable>
+          <Text variant="headingMd">Yeni Gönderi</Text>
+          <Button label="Paylaş" size="sm" fullWidth={false} loading={posting} disabled={!canPost} onPress={submit} />
+        </View>
+
+        <ScrollView contentContainerStyle={{ padding: spacing[3], gap: spacing[3] }} keyboardShouldPersistTaps="handled">
+          <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+            <Avatar uri={me?.avatarUrl} name={me?.displayName} size={44} verified={me?.isVerifiedStudent} />
+            <TextInput
+              value={content}
+              onChangeText={setContent}
+              placeholder="Kampüste neler oluyor? #hashtag ekle, fikrini paylaş..."
+              placeholderTextColor={theme.textMuted}
+              multiline
+              autoFocus
+              maxLength={500}
+              style={{
+                flex: 1,
+                minHeight: 120,
+                fontSize: 17,
+                color: theme.textPrimary,
+                textAlignVertical: 'top',
+                paddingTop: 8,
+              }}
+            />
+          </View>
+
+          {photos.length ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+              {photos.map((uri, i) => (
+                <View key={i}>
+                  <Image source={{ uri }} style={{ width: 110, height: 110, borderRadius: radius.md, backgroundColor: theme.surface3 }} />
+                  <Pressable
+                    onPress={() => removePhoto(i)}
+                    style={{
+                      position: 'absolute',
+                      top: 4,
+                      right: 4,
+                      backgroundColor: 'rgba(0,0,0,0.6)',
+                      borderRadius: 12,
+                    }}
+                    hitSlop={6}
+                  >
+                    <Ionicons name="close" size={18} color="#fff" />
+                  </Pressable>
+                </View>
+              ))}
+            </ScrollView>
+          ) : null}
+
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 6,
-              backgroundColor: (domain === 'social' ? theme.primary : theme.info) + '22',
-              paddingHorizontal: 12,
-              paddingVertical: 6,
-              borderRadius: 999,
+              gap: spacing[4],
+              paddingVertical: spacing[2],
+              borderTopWidth: 1,
+              borderBottomWidth: 1,
+              borderColor: theme.border,
             }}
           >
-            <Ionicons
-              name={domain === 'social' ? 'sparkles' : 'briefcase'}
-              size={14}
-              color={domain === 'social' ? theme.primary : theme.info}
-            />
-            <Text variant="caption" weight="600" style={{ color: domain === 'social' ? theme.primary : theme.info }}>
-              {domain === 'social' ? 'Sosyal' : 'Kariyer'}
-            </Text>
+            <Pressable onPress={addPhoto} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="image-outline" size={26} color={theme.success} />
+              <Text variant="caption" tone="secondary">Fotoğraf</Text>
+            </Pressable>
+            <Pressable onPress={() => router.push('/reel/create')} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="videocam-outline" size={26} color={theme.danger} />
+              <Text variant="caption" tone="secondary">Reel</Text>
+            </Pressable>
+            <Pressable onPress={() => router.push('/story/create')} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="add-circle-outline" size={26} color={theme.primary} />
+              <Text variant="caption" tone="secondary">Story</Text>
+            </Pressable>
+            <View style={{ flex: 1 }} />
+            <Text variant="caption" tone="muted">{content.length}/500</Text>
           </View>
-          <Button label="Paylaş" size="sm" fullWidth={false} loading={posting} onPress={submit} />
-        </View>
 
-        <TextInput
-          value={content}
-          onChangeText={setContent}
-          placeholder={domain === 'social' ? 'Neler oluyor? #hashtag kullan' : 'Bir başarı, proje veya fırsat paylaş'}
-          placeholderTextColor={theme.textMuted}
-          multiline
-          autoFocus
-          maxLength={500}
-          style={{
-            flex: 1,
-            padding: spacing[3],
-            fontSize: 17,
-            color: theme.textPrimary,
-            textAlignVertical: 'top',
-          }}
-        />
-
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: spacing[4],
-            paddingHorizontal: spacing[3],
-            paddingVertical: spacing[2],
-            borderTopWidth: 1,
-            borderTopColor: theme.border,
-          }}
-        >
-          <Ionicons name="image-outline" size={24} color={theme.textSecondary} />
-          {domain === 'social' ? (
-            <>
-              <Pressable onPress={() => goCompose('/compose/poll')} hitSlop={8}>
-                <Ionicons name="stats-chart-outline" size={24} color={theme.textSecondary} />
-              </Pressable>
-              <Pressable onPress={() => goCompose('/compose/event')} hitSlop={8}>
-                <Ionicons name="calendar-outline" size={24} color={theme.textSecondary} />
-              </Pressable>
-            </>
-          ) : null}
-          <View style={{ flex: 1 }} />
-          <Text variant="caption" tone="muted">
-            {content.length}/500
-          </Text>
-        </View>
+          <View style={{ gap: spacing[2] }}>
+            <Text variant="caption" tone="muted">Özel içerik türü</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] }}>
+              {QUICK.map((item) => (
+                <Pressable
+                  key={item.label}
+                  onPress={() => router.push(item.route as never)}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 8,
+                    paddingVertical: 10,
+                    paddingHorizontal: 14,
+                    borderRadius: radius.full,
+                    borderWidth: 1,
+                    borderColor: theme.border,
+                    backgroundColor: theme.surface,
+                  }}
+                >
+                  <Ionicons name={item.icon} size={18} color={item.color} />
+                  <Text weight="600" variant="caption">{item.label}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  );
-}
-
-function DomainChoice({
-  icon,
-  title,
-  desc,
-  color,
-  onPress,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  title: string;
-  desc: string;
-  color: string;
-  onPress: () => void;
-}) {
-  const { theme } = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 14,
-        padding: 18,
-        borderRadius: 16,
-        borderWidth: 1.5,
-        borderColor: theme.border,
-        backgroundColor: theme.surface,
-      }}
-    >
-      <View
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: 24,
-          backgroundColor: color + '22',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Ionicons name={icon} size={24} color={color} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text weight="600" variant="headingMd">
-          {title}
-        </Text>
-        <Text variant="caption" tone="muted">
-          {desc}
-        </Text>
-      </View>
-      <Ionicons name="chevron-forward" size={22} color={theme.textMuted} />
-    </Pressable>
   );
 }

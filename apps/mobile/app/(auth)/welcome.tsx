@@ -33,12 +33,12 @@ export default function Welcome() {
           UniCampus
         </Text>
         <Text tone="muted" center style={{ maxWidth: 300 }}>
-          Üniversitenin sosyal ve kariyer dünyası tek yerde. Sadece doğrulanmış öğrenciler.
+          Kampüsün nabzı tek yerde: paylaş, etkinliklere katıl, toplulukları keşfet. Sadece doğrulanmış öğrenciler.
         </Text>
 
         <View style={{ flexDirection: 'row', gap: spacing[2], marginTop: spacing[3] }}>
-          <Feature icon="people" label="Sosyal" theme={theme} />
-          <Feature icon="briefcase" label="Kariyer" theme={theme} />
+          <Feature icon="people" label="Topluluk" theme={theme} />
+          <Feature icon="calendar" label="Etkinlik" theme={theme} />
           <Feature icon="shield-checkmark" label="Güvenli" theme={theme} />
         </View>
       </View>

@@ -7,16 +7,16 @@ import { Text } from '../../src/ui/Text.js';
 import { Avatar } from '../../src/ui/Avatar.js';
 import { Badge } from '../../src/ui/Badge.js';
 import { FollowButton, type FollowState } from '../../src/ui/FollowButton.js';
-import { ConnectButton, type ConnectState } from '../../src/ui/ConnectButton.js';
 import { Skeleton } from '../../src/ui/Skeleton.js';
 import { ProjectCard } from '../../src/ui/ProjectCard.js';
 import { MilestoneCard } from '../../src/ui/MilestoneCard.js';
-import { AcademicInfoCard } from '../../src/ui/AcademicInfoCard.js';
+import { ProfileAcademicGrid } from '../../src/ui/ProfileAcademicGrid.js';
+import { ProfileCommunities } from '../../src/ui/ProfileCommunities.js';
 import { useToast } from '../../src/ui/Toast.js';
 import { useTheme } from '../../src/lib/theme.js';
 import { getProfile } from '../../src/features/users/api.js';
 import { congratulateMilestone, getUserMilestones, getUserProjects } from '../../src/features/career/api.js';
-import { followUser, requestConnection, unfollowUser } from '../../src/features/social/api.js';
+import { followUser, unfollowUser } from '../../src/features/social/api.js';
 import { addCloseFriend, getCloseFriends, removeCloseFriend } from '../../src/features/stories/api.js';
 import { createConversation } from '../../src/features/messaging/api.js';
 
@@ -38,7 +38,6 @@ export default function UserProfile() {
   });
 
   const [followState, setFollowState] = useState<FollowState>('none');
-  const [connectState, setConnectState] = useState<ConnectState>('none');
   const [busy, setBusy] = useState(false);
 
   const user = data?.user;
@@ -102,20 +101,6 @@ export default function UserProfile() {
     }
   }
 
-  async function onConnect() {
-    if (!user || connectState !== 'none') return;
-    setBusy(true);
-    try {
-      await requestConnection(user.id);
-      setConnectState('pending');
-      toast.show('Bağlantı isteği gönderildi', 'success');
-    } catch {
-      toast.show('İşlem başarısız', 'error');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function onMessage() {
     if (!user || busy) return;
     setBusy(true);
@@ -145,7 +130,7 @@ export default function UserProfile() {
             <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-around' }}>
               <Stat label="Gönderi" value={user.postCount} />
               <Stat label="Takipçi" value={user.followerCount} />
-              <Stat label="Bağlantı" value={user.connectionCount} />
+              <Stat label="Takip" value={user.followingCount ?? 0} />
             </View>
           </View>
 
@@ -173,9 +158,17 @@ export default function UserProfile() {
             {user.bio ? <Text tone="secondary">{user.bio}</Text> : null}
           </View>
 
+          {data?.academic ? <ProfileAcademicGrid academic={data.academic} /> : null}
+
+          {data?.featuredCommunities?.length ? (
+            <ProfileCommunities
+              communities={data.featuredCommunities}
+              onPress={(id) => router.push(`/community/${id}`)}
+            />
+          ) : null}
+
           <View style={{ flexDirection: 'row', gap: spacing[2] }}>
             <FollowButton state={followState} onPress={onFollow} loading={busy} />
-            <ConnectButton state={connectState} onPress={onConnect} loading={busy} />
             <Pressable
               onPress={onMessage}
               disabled={busy}
@@ -211,8 +204,6 @@ export default function UserProfile() {
               />
             </Pressable>
           </View>
-
-          {data?.academic ? <AcademicInfoCard academic={data.academic} /> : null}
 
           {projectsQuery.data?.items.length ? (
             <View style={{ gap: spacing[2], marginTop: spacing[2] }}>

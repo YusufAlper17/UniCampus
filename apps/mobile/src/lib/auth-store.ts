@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { USE_MOCK } from './api.js';
 
 const ACCESS_KEY = 'uc_access_token';
 const REFRESH_KEY = 'uc_refresh_token';
@@ -36,6 +37,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       SecureStore.getItemAsync(ACCESS_KEY),
       SecureStore.getItemAsync(REFRESH_KEY),
     ]);
+    // Demo modu: oturum yoksa otomatik giriş yap (uygulama doğrudan akışla açılsın).
+    if (USE_MOCK && !accessToken) {
+      set({ accessToken: 'mock-access', refreshToken: 'mock-refresh', hydrated: true });
+      return;
+    }
     set({ accessToken, refreshToken, hydrated: true });
   },
 

@@ -10,10 +10,17 @@ import type {
 } from '@unicampus/shared-types';
 import { api } from '../../lib/api.js';
 
-export function getCommunities(opts?: { mine?: boolean; cursor?: string | null }) {
+export function getCommunities(opts?: {
+  mine?: boolean;
+  cursor?: string | null;
+  sort?: 'trending';
+  category?: string;
+}) {
   const params = new URLSearchParams();
   if (opts?.mine) params.set('mine', 'true');
   if (opts?.cursor) params.set('cursor', opts.cursor);
+  if (opts?.sort) params.set('sort', opts.sort);
+  if (opts?.category && opts.category !== 'all') params.set('category', opts.category);
   return api.get<{ items: Community[]; nextCursor: string | null }>(
     `/communities?${params.toString()}`,
   );
@@ -81,4 +88,26 @@ export function createInvite(id: string, body?: { expiresInDays?: number; maxUse
 
 export function joinByToken(token: string) {
   return api.post<{ communityId: string; status: 'active' }>(`/join/${token}`);
+}
+
+export interface CommunityHubItem {
+  community: Community;
+  lastMessage?: {
+    channelId: string;
+    channelName: string;
+    content: string;
+    createdAt: string;
+    senderName?: string;
+  };
+  unreadCount: number;
+}
+
+export function getMyCommunitiesHub() {
+  return api.get<{ items: CommunityHubItem[] }>('/communities/mine/hub');
+}
+
+export function getMyCommunitiesFeed() {
+  return api.get<{ items: { type: 'post'; post: import('@unicampus/shared-types').Post }[] }>(
+    '/communities/mine/feed',
+  );
 }
