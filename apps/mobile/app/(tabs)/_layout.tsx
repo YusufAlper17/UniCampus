@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Redirect, Tabs } from 'expo-router';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '../../src/lib/theme.js';
@@ -34,11 +34,15 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: theme.surface,
           borderTopColor: theme.border,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
+          height: Platform.OS === 'web' ? 64 : 60,
+          paddingBottom: Platform.OS === 'web' ? 6 : 8,
+          paddingTop: Platform.OS === 'web' ? 5 : 8,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '600',
+          ...(Platform.OS === 'web' ? { lineHeight: 13, marginTop: 1 } : {}),
+        },
       }}
     >
       <Tabs.Screen

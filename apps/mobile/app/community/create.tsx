@@ -1,42 +1,73 @@
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import type { CommunityVisibility, JoinMode } from '@unicampus/shared-types';
-import { Screen } from '../../src/ui/Screen.js';
 import { Text } from '../../src/ui/Text.js';
 import { Input } from '../../src/ui/Input.js';
 import { Button } from '../../src/ui/Button.js';
-import { SegmentedControl } from '../../src/ui/SegmentedControl.js';
 import { useToast } from '../../src/ui/Toast.js';
 import { useTheme } from '../../src/lib/theme.js';
 import { createCommunity } from '../../src/features/communities/api.js';
 import { ApiError } from '../../src/lib/api.js';
 
-const VISIBILITY_HINT: Record<CommunityVisibility, string> = {
-  public: 'Keşfette görünür, herkes bulabilir.',
-  unlisted: 'Yalnızca link ile bulunur.',
-  private: 'Gizli; sadece üyeler içeriği görür.',
-};
+const CATEGORIES = [
+  'Teknoloji',
+  'Kariyer',
+  'Yapay Zekâ',
+  'Mühendislik',
+  'Sanat',
+  'Müzik',
+  'Spor',
+  'Doğa Sporları',
+  'Girişimcilik',
+  'Finans',
+  'Çevre',
+  'Uluslararası',
+];
 
-const JOIN_HINT: Record<JoinMode, string> = {
-  open: 'Herkes anında katılır.',
-  request: 'Katılım yönetici onayı ister.',
-  invite: 'Yalnızca davet linkiyle katılınır.',
-};
+const VISIBILITY_OPTIONS: {
+  value: CommunityVisibility;
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  hint: string;
+}[] = [
+  { value: 'public', icon: 'globe-outline', title: 'Açık', hint: 'Keşfette görünür, herkes bulabilir.' },
+  { value: 'unlisted', icon: 'link-outline', title: 'Link ile', hint: 'Yalnızca linki olanlar bulur.' },
+  { value: 'private', icon: 'lock-closed-outline', title: 'Gizli', hint: 'Sadece üyeler içeriği görür.' },
+];
+
+const JOIN_OPTIONS: {
+  value: JoinMode;
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  hint: string;
+}[] = [
+  { value: 'open', icon: 'flash-outline', title: 'Herkese açık', hint: 'İsteyen anında katılır.' },
+  { value: 'request', icon: 'shield-checkmark-outline', title: 'Onaylı', hint: 'Katılım yönetici onayı ister.' },
+  { value: 'invite', icon: 'mail-outline', title: 'Davetle', hint: 'Yalnızca davet linkiyle katılınır.' },
+];
 
 export default function CreateCommunity() {
-  const { spacing } = useTheme();
+  const { theme, spacing, radius } = useTheme();
   const router = useRouter();
   const toast = useToast();
   const qc = useQueryClient();
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<CommunityVisibility>('public');
   const [joinMode, setJoinMode] = useState<JoinMode>('request');
   const [saving, setSaving] = useState(false);
+
+  const initials = name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((w) => w[0]?.toUpperCase() ?? '')
+    .join('');
 
   async function submit() {
     if (name.trim().length < 2) {
@@ -48,7 +79,7 @@ export default function CreateCommunity() {
       const { community } = await createCommunity({
         name: name.trim(),
         description: description.trim() || undefined,
-        category: category.trim() || undefined,
+        category: category ?? undefined,
         type: 'group',
         visibility,
         joinMode,
@@ -64,68 +95,230 @@ export default function CreateCommunity() {
   }
 
   return (
-    <Screen scroll edges={['bottom']} contentStyle={{ gap: spacing[3] }}>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: theme.bg }}
+      contentContainerStyle={{ padding: spacing[3], paddingBottom: spacing[6], gap: spacing[4] }}
+      keyboardShouldPersistTaps="handled"
+    >
       <Stack.Screen options={{ title: 'Topluluk Oluştur', headerShown: true }} />
-      <Input
-        label="Topluluk adı"
-        placeholder="Örn. Yapay Zeka Kulübü"
-        value={name}
-        onChangeText={setName}
-        autoCapitalize="sentences"
-      />
-      <Input
-        label="Açıklama"
-        placeholder="Topluluk ne hakkında?"
-        value={description}
-        onChangeText={setDescription}
-        multiline
-        autoCapitalize="sentences"
-      />
-      <Input
-        label="Kategori"
-        placeholder="Örn. Teknoloji, Spor, Sanat"
-        value={category}
-        onChangeText={setCategory}
-        autoCapitalize="sentences"
-      />
 
-      <View style={{ gap: 8 }}>
-        <Text variant="caption" tone="secondary">
-          Görünürlük
+      {/* Canlı önizleme */}
+      <View style={{ alignItems: 'center', gap: spacing[2], paddingTop: spacing[2] }}>
+        <View
+          style={{
+            width: 84,
+            height: 84,
+            borderRadius: 24,
+            backgroundColor: theme.primary + '16',
+            borderWidth: 1.5,
+            borderColor: theme.primary + '33',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          {initials ? (
+            <Text variant="headingLg" weight="800" style={{ color: theme.primary }}>
+              {initials}
+            </Text>
+          ) : (
+            <Ionicons name="people" size={36} color={theme.primary} />
+          )}
+        </View>
+        <Text variant="headingMd" weight="700" numberOfLines={1}>
+          {name.trim() || 'Yeni Topluluk'}
         </Text>
-        <SegmentedControl<CommunityVisibility>
-          segments={[
-            { value: 'public', label: 'Açık' },
-            { value: 'unlisted', label: 'Link' },
-            { value: 'private', label: 'Gizli' },
-          ]}
-          value={visibility}
-          onChange={setVisibility}
-        />
-        <Text variant="micro" tone="muted">
-          {VISIBILITY_HINT[visibility]}
-        </Text>
+        {category ? (
+          <Text variant="caption" tone="brand" weight="600">
+            {category}
+          </Text>
+        ) : (
+          <Text variant="caption" tone="muted">
+            Kampüsünde bir araya getir
+          </Text>
+        )}
       </View>
 
-      <View style={{ gap: 8 }}>
-        <Text variant="caption" tone="secondary">
-          Katılım
-        </Text>
-        <SegmentedControl<JoinMode>
-          segments={[
-            { value: 'open', label: 'Herkese' },
-            { value: 'request', label: 'İstekle' },
-            { value: 'invite', label: 'Davetle' },
-          ]}
-          value={joinMode}
-          onChange={setJoinMode}
+      {/* Temel bilgiler */}
+      <View style={{ gap: spacing[3] }}>
+        <SectionLabel text="Temel bilgiler" />
+        <Input
+          label="Topluluk adı"
+          placeholder="Örn. Yapay Zeka Kulübü"
+          value={name}
+          onChangeText={setName}
+          autoCapitalize="sentences"
+          maxLength={48}
         />
-        <Text variant="micro" tone="muted">
-          {JOIN_HINT[joinMode]}
-        </Text>
+        <View style={{ gap: 6 }}>
+          <Text variant="caption" tone="secondary">
+            Açıklama
+          </Text>
+          <View
+            style={{
+              borderWidth: 1.5,
+              borderColor: theme.border,
+              borderRadius: radius.md,
+              backgroundColor: theme.surface,
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+              minHeight: 88,
+            }}
+          >
+            <TextInput
+              placeholder="Topluluk ne hakkında? Kimler katılmalı?"
+              placeholderTextColor={theme.textMuted}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              maxLength={200}
+              autoCapitalize="sentences"
+              style={{ color: theme.textPrimary, fontSize: 16, minHeight: 66, textAlignVertical: 'top' }}
+            />
+          </View>
+          <Text variant="micro" tone="muted" style={{ alignSelf: 'flex-end' }}>
+            {description.length}/200
+          </Text>
+        </View>
       </View>
 
-      <Button label="Topluluğu Oluştur" loading={saving} onPress={submit} style={{ marginTop: spacing[2] }} />
-    </Screen>
+      {/* Kategori */}
+      <View style={{ gap: spacing[2] }}>
+        <SectionLabel text="Kategori" />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {CATEGORIES.map((cat) => {
+            const active = category === cat;
+            return (
+              <Pressable
+                key={cat}
+                onPress={() => setCategory(active ? null : cat)}
+                style={{
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  borderRadius: 999,
+                  backgroundColor: active ? theme.primary : theme.surface,
+                  borderWidth: 1,
+                  borderColor: active ? theme.primary : theme.border,
+                }}
+              >
+                <Text variant="caption" weight={active ? '700' : '500'} style={{ color: active ? '#fff' : theme.textSecondary }}>
+                  {cat}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Görünürlük */}
+      <View style={{ gap: spacing[2] }}>
+        <SectionLabel text="Görünürlük" />
+        {VISIBILITY_OPTIONS.map((opt) => (
+          <OptionCard
+            key={opt.value}
+            icon={opt.icon}
+            title={opt.title}
+            hint={opt.hint}
+            active={visibility === opt.value}
+            onPress={() => setVisibility(opt.value)}
+          />
+        ))}
+      </View>
+
+      {/* Katılım */}
+      <View style={{ gap: spacing[2] }}>
+        <SectionLabel text="Katılım şekli" />
+        {JOIN_OPTIONS.map((opt) => (
+          <OptionCard
+            key={opt.value}
+            icon={opt.icon}
+            title={opt.title}
+            hint={opt.hint}
+            active={joinMode === opt.value}
+            onPress={() => setJoinMode(opt.value)}
+          />
+        ))}
+      </View>
+
+      <Button
+        label="Topluluğu Oluştur"
+        loading={saving}
+        onPress={submit}
+        disabled={name.trim().length < 2}
+        style={{ marginTop: spacing[1] }}
+      />
+    </ScrollView>
+  );
+}
+
+function SectionLabel({ text }: { text: string }) {
+  return (
+    <Text variant="micro" tone="muted" weight="700" style={{ textTransform: 'uppercase', letterSpacing: 0.6 }}>
+      {text}
+    </Text>
+  );
+}
+
+function OptionCard({
+  icon,
+  title,
+  hint,
+  active,
+  onPress,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  hint: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  const { theme, radius } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        padding: 14,
+        borderRadius: radius.lg,
+        backgroundColor: active ? theme.primary + '0F' : theme.surface,
+        borderWidth: 1.5,
+        borderColor: active ? theme.primary : theme.border,
+      }}
+    >
+      <View
+        style={{
+          width: 40,
+          height: 40,
+          borderRadius: 12,
+          backgroundColor: active ? theme.primary + '1A' : theme.surface2,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Ionicons name={icon} size={20} color={active ? theme.primary : theme.textMuted} />
+      </View>
+      <View style={{ flex: 1, gap: 1 }}>
+        <Text weight="700" style={{ fontSize: 15 }}>
+          {title}
+        </Text>
+        <Text variant="micro" tone="muted">
+          {hint}
+        </Text>
+      </View>
+      <View
+        style={{
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          borderWidth: 2,
+          borderColor: active ? theme.primary : theme.border,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {active ? <View style={{ width: 11, height: 11, borderRadius: 5.5, backgroundColor: theme.primary }} /> : null}
+      </View>
+    </Pressable>
   );
 }

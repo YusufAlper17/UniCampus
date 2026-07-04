@@ -1,11 +1,11 @@
 import { Pressable, ScrollView, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import type { FeaturedCommunity } from '../features/users/api.js';
-import { useTheme } from '../lib/theme.js';
-import { Text } from './Text.js';
+import type { FeaturedCommunity } from '../../features/users/api.js';
+import { useTheme } from '../../lib/theme.js';
+import { Text } from '../Text.js';
 
-export function ProfileCommunities({
+export function ProfileCommunitiesRow({
   communities,
   onPress,
   onEdit,
@@ -14,7 +14,7 @@ export function ProfileCommunities({
   onPress?: (id: string) => void;
   onEdit?: () => void;
 }) {
-  const { theme, spacing, radius } = useTheme();
+  const { theme, spacing } = useTheme();
   if (!communities.length && !onEdit) return null;
 
   return (
@@ -31,31 +31,22 @@ export function ProfileCommunities({
           </Pressable>
         ) : null}
       </View>
+
       {communities.length ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing[2] }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing[3] }}>
           {communities.map((c) => (
             <Pressable
               key={c.id}
               onPress={() => onPress?.(c.id)}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-                paddingVertical: 8,
-                paddingHorizontal: 12,
-                borderRadius: radius.full,
-                backgroundColor: theme.surface2,
-                borderWidth: 1,
-                borderColor: theme.border,
-              }}
+              style={{ width: 72, alignItems: 'center', gap: 6 }}
             >
               <View
                 style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: 8,
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
                   overflow: 'hidden',
-                  backgroundColor: theme.primary + '22',
+                  backgroundColor: theme.surface3,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
@@ -63,10 +54,10 @@ export function ProfileCommunities({
                 {c.avatarUrl ? (
                   <Image source={{ uri: c.avatarUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                 ) : (
-                  <Ionicons name="people" size={14} color={theme.primary} />
+                  <Ionicons name="people" size={20} color={theme.textMuted} />
                 )}
               </View>
-              <Text variant="caption" weight="600" numberOfLines={1} style={{ maxWidth: 120 }}>
+              <Text variant="micro" weight="600" numberOfLines={2} center style={{ width: 72 }}>
                 {c.name}
               </Text>
             </Pressable>

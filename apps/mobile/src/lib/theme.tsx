@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useColorScheme } from 'react-native';
-import * as SecureStore from 'expo-secure-store';
+import { Platform, useColorScheme } from 'react-native';
+import { appStorage } from './storage.js';
 import {
   darkTheme,
   lightTheme,
@@ -27,24 +27,41 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+function getForcedWebTheme(): ThemePref | null {
+  if (Platform.OS !== 'web' || typeof window === 'undefined') return null;
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('demo') === '1') return 'light';
+
+  const urlTheme = params.get('theme');
+  return urlTheme === 'light' || urlTheme === 'dark' ? urlTheme : null;
+}
+
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const system = useColorScheme();
-  const [pref, setPrefState] = useState<ThemePref>('system');
-  const [ready, setReady] = useState(false);
+  const [forcedWebTheme] = useState<ThemePref | null>(getForcedWebTheme);
+  const [pref, setPrefState] = useState<ThemePref>(() => forcedWebTheme ?? 'system');
+  const [ready, setReady] = useState(() => forcedWebTheme != null);
 
   useEffect(() => {
-    void SecureStore.getItemAsync(THEME_KEY).then((stored) => {
+    if (forcedWebTheme) {
+      setReady(true);
+      return;
+    }
+
+    void appStorage.getItemAsync(THEME_KEY).then((stored) => {
       if (stored === 'light' || stored === 'dark' || stored === 'system') {
         setPrefState(stored);
       }
       setReady(true);
     });
-  }, []);
+  }, [forcedWebTheme]);
 
   const setPref = useCallback((next: ThemePref) => {
+    if (forcedWebTheme) return;
     setPrefState(next);
-    void SecureStore.setItemAsync(THEME_KEY, next);
-  }, []);
+    void appStorage.setItemAsync(THEME_KEY, next);
+  }, [forcedWebTheme]);
 
   const value = useMemo<ThemeContextValue>(() => {
     const name: ThemeName = pref === 'system' ? (system === 'dark' ? 'dark' : 'light') : pref;

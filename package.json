@@ -18,6 +18,7 @@
     "db:studio": "npm run db:studio --workspace=apps/api",
     "infra:up": "docker compose -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "portfolio:dev": "npm run dev --workspace=apps/portfolio",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
   },
   "engines": {

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
 import { USE_MOCK } from './api.js';
+import { appStorage } from './storage.js';
 
 const ACCESS_KEY = 'uc_access_token';
 const REFRESH_KEY = 'uc_refresh_token';
@@ -34,12 +34,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   hydrate: async () => {
     const [accessToken, refreshToken] = await Promise.all([
-      SecureStore.getItemAsync(ACCESS_KEY),
-      SecureStore.getItemAsync(REFRESH_KEY),
+      appStorage.getItemAsync(ACCESS_KEY),
+      appStorage.getItemAsync(REFRESH_KEY),
     ]);
     // Demo modu: oturum yoksa otomatik giriş yap (uygulama doğrudan akışla açılsın).
     if (USE_MOCK && !accessToken) {
-      set({ accessToken: 'mock-access', refreshToken: 'mock-refresh', hydrated: true });
+      set({
+        accessToken: 'mock-access',
+        refreshToken: 'mock-refresh',
+        user: { id: 'u_me', username: 'yusufalper', displayName: 'Yusuf Alper' },
+        hydrated: true,
+      });
       return;
     }
     set({ accessToken, refreshToken, hydrated: true });
@@ -47,21 +52,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setSession: async ({ accessToken, refreshToken, user }) => {
     await Promise.all([
-      SecureStore.setItemAsync(ACCESS_KEY, accessToken),
-      SecureStore.setItemAsync(REFRESH_KEY, refreshToken),
+      appStorage.setItemAsync(ACCESS_KEY, accessToken),
+      appStorage.setItemAsync(REFRESH_KEY, refreshToken),
     ]);
     set({ accessToken, refreshToken, user: user ?? get().user });
   },
 
   setAccessToken: (accessToken) => {
-    void SecureStore.setItemAsync(ACCESS_KEY, accessToken);
+    void appStorage.setItemAsync(ACCESS_KEY, accessToken);
     set({ accessToken });
   },
 
   signOut: async () => {
     await Promise.all([
-      SecureStore.deleteItemAsync(ACCESS_KEY),
-      SecureStore.deleteItemAsync(REFRESH_KEY),
+      appStorage.deleteItemAsync(ACCESS_KEY),
+      appStorage.deleteItemAsync(REFRESH_KEY),
     ]);
     set({ accessToken: null, refreshToken: null, user: null });
   },

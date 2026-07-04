@@ -133,7 +133,7 @@ export const USERS: MockUser[] = [
     followerCount: 842,
     followingCount: 391,
     connectionCount: 214,
-    postCount: 0,
+    postCount: 6,
     statusText: 'Bitirme projesi modunda',
     statusEmoji: '💻',
     faculty: 'Bilgisayar ve Bilişim Fakültesi',
@@ -391,6 +391,76 @@ export const USERS: MockUser[] = [
     graduationYear: 2028,
     createdAt: days(300),
   },
+  {
+    id: 'u_oguz',
+    type: 'student',
+    username: 'oguztan',
+    displayName: 'Oğuz Tan',
+    avatarUrl: av(41),
+    bio: 'Full-stack · açık kaynak katkıcısı · İTÜ GDSC',
+    careerHeadline: 'Bilgisayar Mühendisliği · GDSC Lead',
+    accountVisibility: 'public',
+    isVerifiedStudent: true,
+    isVerifiedOrg: false,
+    followerCount: 1560,
+    followingCount: 380,
+    connectionCount: 245,
+    postCount: 0,
+    faculty: 'Bilgisayar ve Bilişim Fakültesi',
+    department: 'Bilgisayar Mühendisliği',
+    classYear: 4,
+    gpa: 3.52,
+    graduationYear: 2026,
+    featuredCommunityIds: ['c_gdsc', 'c_acm'],
+    createdAt: days(480),
+  },
+  {
+    id: 'u_merve',
+    type: 'student',
+    username: 'merveaksoy',
+    displayName: 'Merve Aksoy',
+    avatarUrl: av(26),
+    bio: 'UX/UI tasarım · Figma tutkunu · İTÜ Fotoğrafçılık',
+    careerHeadline: 'Endüstri Ürünleri Tasarımı',
+    accountVisibility: 'public',
+    isVerifiedStudent: true,
+    isVerifiedOrg: false,
+    followerCount: 2890,
+    followingCount: 490,
+    connectionCount: 310,
+    postCount: 0,
+    statusText: 'Portfolyo güncellendi',
+    statusEmoji: '🎨',
+    faculty: 'Mimarlık Fakültesi',
+    department: 'Endüstri Ürünleri Tasarımı',
+    classYear: 3,
+    gpa: 3.71,
+    graduationYear: 2027,
+    featuredCommunityIds: ['c_foto', 'c_giris'],
+    createdAt: days(360),
+  },
+  {
+    id: 'u_alp',
+    type: 'student',
+    username: 'alpkara',
+    displayName: 'Alp Kara',
+    avatarUrl: av(58),
+    bio: 'Siber güvenlik · CTF takımı kaptanı 🔐',
+    careerHeadline: 'Bilgisayar Mühendisliği · CyberSec',
+    accountVisibility: 'public',
+    isVerifiedStudent: true,
+    isVerifiedOrg: false,
+    followerCount: 1120,
+    followingCount: 195,
+    connectionCount: 178,
+    postCount: 0,
+    faculty: 'Bilgisayar ve Bilişim Fakültesi',
+    department: 'Bilgisayar Mühendisliği',
+    classYear: 3,
+    gpa: 3.38,
+    graduationYear: 2027,
+    createdAt: days(410),
+  },
   // ---- Kulüp / topluluk hesapları ----
   {
     id: 'org_acm',
@@ -540,6 +610,74 @@ const event = (
 
 // ---- Akış gönderileri (yeni → eski) ----
 export const POSTS: Post[] = [
+  mkPost({
+    author: ME_ID,
+    content:
+      'CampusConnect MVP\'si artık Expo Router ile çalışıyor 🚀 Topluluklar, etkinlikler ve DM — hepsi tek uygulamada. Beta testçisi olmak isteyen?',
+    media: media([{ url: IMG.laptopCode }, { url: IMG.codeScreen }]),
+    location: 'İTÜ Ayazağa',
+    likeCount: 186,
+    commentCount: 24,
+    likedByMe: false,
+    createdAt: min(8),
+  }),
+  mkPost({
+    author: ME_ID,
+    content: 'ACM algoritma çalışma grubunda bugün 3 problem çözdük. Yarın da lab\'da 20:00 🧠 #İTÜ #algoritma',
+    media: media([{ url: IMG.books }]),
+    location: 'Bilgisayar Müh. Lab',
+    likeCount: 94,
+    commentCount: 11,
+    createdAt: min(45),
+  }),
+  mkPost({
+    author: ME_ID,
+    type: 'poll',
+    content: 'Bitirme projesi konusu için son karar — sizce hangisi daha etkili?',
+    poll: poll(
+      'poll_me1',
+      'Bitirme projesi odağı?',
+      [
+        ['Kampüs sosyal ağı', 42],
+        ['AI ders asistanı', 78],
+        ['Etkinlik yönetimi', 35],
+        ['Mesajlaşma + E2E', 51],
+      ],
+      inDays(3),
+      ['poll_me1_o1'],
+    ),
+    likeCount: 67,
+    commentCount: 19,
+    createdAt: hrs(6),
+  }),
+  mkPost({
+    author: ME_ID,
+    content: 'Microsoft staj mülakatından geçtim! Yaz dönemi Seattle\'da görüşürüz 🎉 Teşekkürler ACM ve kariyer merkezi ekibi.',
+    media: media([{ url: IMG.grad }]),
+    likeCount: 412,
+    commentCount: 58,
+    likedByMe: false,
+    savedByMe: true,
+    createdAt: days(2),
+  }),
+  mkPost({
+    author: ME_ID,
+    content: 'Hackathon takımı toplandı. Backend + mobil hazır, demo gecesinde görüşürüz 💻🚀',
+    media: media([{ url: IMG.hackathon }]),
+    location: 'İTÜ ACM',
+    likeCount: 203,
+    commentCount: 31,
+    createdAt: days(4),
+  }),
+  mkPost({
+    author: ME_ID,
+    content: 'Gümüş\'te kod yazarken en iyi playlist: lo-fi + yağmur sesi ☕🎧 Kimin favorisi farklı?',
+    media: media([{ url: IMG.coffee }]),
+    location: 'Gümüş Kafeterya',
+    likeCount: 156,
+    commentCount: 22,
+    createdAt: days(6),
+  }),
   mkPost({
     author: 'u_zeynep',
     content:
@@ -804,6 +942,53 @@ export const POSTS: Post[] = [
     commentCount: 26,
     createdAt: days(5),
   }),
+  mkPost({
+    author: 'u_merve',
+    content: 'Yeni portfolyo sitemi yayınladım! İTÜ projeleri, UX case study\'ler ve freelance işler 🎨 Link bio\'da.',
+    media: media([{ url: IMG.art }, { url: IMG.presentation }]),
+    likeCount: 734,
+    commentCount: 41,
+    createdAt: hrs(10),
+  }),
+  mkPost({
+    author: 'u_oguz',
+    type: 'event',
+    content: 'GDSC İTÜ · Cloud Study Jam serisi başlıyor! GCP sertifikasına giden yol — kayıt ücretsiz ☁️',
+    event: event('ev5', inDays(4), 'İTÜ SDKM', 120, 200, {
+      participationType: 'open',
+      title: 'GDSC Cloud Study Jam · GCP Fundamentals',
+      attendees: attendeesFrom('u_ada', ME_ID, 'u_zeynep'),
+    }),
+    media: media([{ url: IMG.presentation }]),
+    likeCount: 389,
+    commentCount: 27,
+    createdAt: hrs(12),
+  }),
+  mkPost({
+    author: 'u_alp',
+    content: 'İTÜ CTF takımı ulusal yarışmada 3. oldu! 🥉 Reverse engineering ve web exploit\'te full puan. Gelecek sezon daha iddialıyız 🔐',
+    media: media([{ url: IMG.codeScreen }]),
+    likeCount: 521,
+    commentCount: 36,
+    createdAt: hrs(15),
+  }),
+  mkPost({
+    author: 'org_kariyer',
+    content: 'Trendyol Yaz Stajı ilanı açıldı! Backend, mobil ve veri bilimi pozisyonları. Son başvuru 2 hafta 📋',
+    media: media([{ url: IMG.grad }]),
+    likeCount: 890,
+    commentCount: 52,
+    savedByMe: true,
+    createdAt: hrs(17),
+  }),
+  mkPost({
+    author: 'u_mert',
+    content: 'Teknofest gömülü sistem kategorisinde finalist olduk! PCB tasarımı ve firmware ekibine teşekkürler 🤖',
+    media: media([{ url: IMG.circuit }, { url: IMG.robot }]),
+    likeCount: 678,
+    commentCount: 44,
+    createdAt: days(1),
+  }),
 ];
 
 // ---- Reels (kısa videolar) ----
@@ -828,6 +1013,9 @@ export const REELS: Post[] = [
   reel('u_irem', 'Caz gecesi backstage 🎷', VID.dream, IMG.guitar, 3900, 67, 33),
   reel('u_elif', 'Maket time-lapse · 12 saat → 20 saniye', VID.blazes, IMG.art, 2150, 48, 40),
   reel('u_zeynep', 'Kod yazarken lo-fi playlist\'im 🎧', VID.sintel, IMG.laptopCode, 1980, 39, 50),
+  reel('u_merve', 'UI tasarım süreci · Figma → React Native', VID.blazes, IMG.art, 2450, 55, 12),
+  reel('u_alp', 'CTF exploit demo · 60 saniyede flag 🚩', VID.dream, IMG.codeScreen, 3100, 82, 18),
+  reel('u_oguz', 'Flutter hot reload ile canlı geliştirme', VID.bunny, IMG.laptopCode, 1780, 34, 24),
 ];
 
 // ---- Hikayeler ----
@@ -855,6 +1043,9 @@ export const STORIES: Story[] = [
   story('u_kerem', IMG.mountain, 'Zirve!', 6),
   story('org_acm', IMG.hackathon, 'Hackathon başladı 🚀', 2),
   story('u_deniz', IMG.sailing, undefined, 8),
+  story('u_merve', IMG.art, 'Yeni tasarım 🎨', 3),
+  story('u_oguz', IMG.codeScreen, 'GDSC etkinliği', 4),
+  story('u_alp', IMG.circuit, 'CTF antrenmanı', 5),
 ];
 
 // ---- Topluluklar ----
@@ -946,6 +1137,12 @@ export const CHANNEL_MESSAGES: Record<string, { sender: string; content: string;
   c_ai_duyurular: [
     { sender: 'u_zeynep', content: 'LLM fine-tuning workshop cumartesi 14:00 · Kayıt açık', ageMin: 45 },
     { sender: 'u_ada', content: 'Demo gecesi için proje başvuruları son gün!', ageMin: 20 },
+    { sender: ME_ID, content: 'RAG pipeline\'ımı workshop\'ta anlatacağım, gelin!', ageMin: 10 },
+  ],
+  c_ai_sohbet: [
+    { sender: 'u_ada', content: 'HuggingFace dataset\'i hazır, fine-tune başlayalım mı?', ageMin: 80 },
+    { sender: 'u_zeynep', content: 'Evet, Colab Pro açtım', ageMin: 60 },
+    { sender: ME_ID, content: 'Eval metriklerini de ekleyelim', ageMin: 30 },
   ],
   c_gdsc_sohbet: [
     { sender: 'u_ada', content: 'Flutter study jam grubu kuruyoruz, katılan?', ageMin: 90 },
@@ -1037,6 +1234,41 @@ export const CONVERSATIONS: SeedConversation[] = [
       { sender: 'u_selin', content: 'Çok teşekkürler 🥹 mentor görüşmesi ayarlandı', ageMin: 1350 },
     ],
   },
+  {
+    id: 'cv_oguz',
+    type: 'dm',
+    peer: 'u_oguz',
+    unread: 1,
+    messages: [
+      { sender: 'u_oguz', content: 'GDSC Cloud Study Jam\'e kayıt oldun mu?', ageMin: 200 },
+      { sender: ME_ID, content: 'Az önce kaydoldum, sen de geliyor musun?', ageMin: 180 },
+      { sender: 'u_oguz', content: 'Tabii! GCP sertifikası için birlikte çalışalım', ageMin: 15 },
+    ],
+  },
+  {
+    id: 'cv_merve',
+    type: 'dm',
+    peer: 'u_merve',
+    unread: 0,
+    messages: [
+      { sender: 'u_merve', content: 'CampusConnect için UI mockup hazırladım, bakar mısın?', ageMin: 400 },
+      { sender: ME_ID, content: 'Harika görünüyor! Figma linkini at', ageMin: 380 },
+      { sender: 'u_merve', mediaUrl: IMG.art, ageMin: 375 },
+      { sender: ME_ID, content: 'Profil ekranı tam istediğim gibi 🔥', ageMin: 360 },
+    ],
+  },
+  {
+    id: 'cv_gdsc',
+    type: 'group',
+    title: 'GDSC Study Jam ☁️',
+    unread: 3,
+    messages: [
+      { sender: 'u_oguz', content: 'Cloud Study Jam kayıtları açıldı!', ageMin: 120 },
+      { sender: 'u_ada', content: 'GCP kredisi de veriyorlar mı?', ageMin: 90 },
+      { sender: ME_ID, content: 'Evet, $300 kredi + sertifika sınavı ücretsiz', ageMin: 60 },
+      { sender: 'u_oguz', content: 'Cumartesi 10:00 SDKM\'da buluşalım', ageMin: 20 },
+    ],
+  },
 ];
 
 // ---- Kampüs fırsatları (indirimler) ----
@@ -1047,6 +1279,9 @@ export const DEALS: (Deal & { brandName: string; logoUrl: string })[] = [
   { id: 'd4', sponsorId: 'org_kariyer', brandName: 'FitLab Maslak', title: 'Spor salonu %30 öğrenci', description: 'Aylık üyeliklerde öğrenciye özel %30 indirim.', bannerUrl: IMG.gym, logoUrl: av(47), category: 'Spor', discountValue: '%30', endsAt: inDays(30) },
   { id: 'd5', sponsorId: 'org_kariyer', brandName: 'Çınar Kırtasiye', title: 'Maket malzemelerinde %15', description: 'Mimarlık ve tasarım malzemelerinde öğrenci indirimi.', bannerUrl: IMG.art, logoUrl: av(48), category: 'Kırtasiye', discountValue: '%15', endsAt: inDays(45) },
   { id: 'd6', sponsorId: 'org_kariyer', brandName: 'BiTaksi Kampüs', title: 'İlk 5 yolculukta %40', description: 'Gece dersten çıkışta güvenle eve. Kod: ITU40', bannerUrl: IMG.cityNight, logoUrl: av(49), category: 'Ulaşım', discountValue: '%40', endsAt: inDays(15) },
+  { id: 'd7', sponsorId: 'org_kariyer', brandName: 'Udemy', title: 'Öğrenciye %60 indirim', description: '.edu mailinle tüm kurslarda ekstra %60. Yaz stajı öncesi yetenek geliştir.', bannerUrl: IMG.codeScreen, logoUrl: av(52), category: 'Eğitim', discountValue: '%60', endsAt: inDays(60) },
+  { id: 'd8', sponsorId: 'org_kariyer', brandName: 'Migros Maslak', title: 'Haftalık alışverişte %10', description: 'Maslak şubesinde öğrenci kartı ile haftalık alışveriş indirimi.', bannerUrl: IMG.burger, logoUrl: av(53), category: 'Market', discountValue: '%10', endsAt: inDays(90) },
+  { id: 'd9', sponsorId: 'org_kariyer', brandName: 'Notion', title: 'Education Plus ücretsiz', description: 'Öğrenci hesabıyla Notion Plus + AI özellikleri ücretsiz.', bannerUrl: IMG.books, logoUrl: av(54), category: 'Yazılım', discountValue: 'Ücretsiz', endsAt: inDays(365) },
 ];
 
 // ---- Kariyer: projeler / milestone / fırsatlar ----
@@ -1054,6 +1289,7 @@ export const PROJECTS: Record<string, { id: string; title: string; role: string;
   [ME_ID]: [
     { id: 'pr1', title: 'CampusConnect', role: 'Mobil Geliştirici', description: 'İTÜ öğrencileri için etkinlik ve topluluk uygulaması. React Native + Expo.', techTags: ['React Native', 'Expo', 'TypeScript', 'Zustand'], githubUrl: 'https://github.com', demoUrl: 'https://expo.dev' },
     { id: 'pr2', title: 'Ninova Özetleyici', role: 'Backend', description: 'Ders duyurularını LLM ile özetleyen bot.', techTags: ['Python', 'FastAPI', 'OpenAI'], githubUrl: 'https://github.com' },
+    { id: 'pr5', title: 'UniCampus API', role: 'Full-stack', description: 'Fastify + PostgreSQL ile kampüs sosyal ağı backend\'i.', techTags: ['Node.js', 'Fastify', 'PostgreSQL', 'Redis'], githubUrl: 'https://github.com' },
   ],
   u_zeynep: [
     { id: 'pr3', title: 'RAG Ders Asistanı', role: 'ML Engineer', description: 'Retrieval-augmented generation ile ders sorularını yanıtlayan asistan.', techTags: ['PyTorch', 'LangChain', 'Pinecone'], githubUrl: 'https://github.com' },
@@ -1061,12 +1297,19 @@ export const PROJECTS: Record<string, { id: string; title: string; role: string;
   u_burak: [
     { id: 'pr4', title: 'Otonom Rover Navigasyon', role: 'Robotics', description: 'SLAM tabanlı otonom navigasyon yığını.', techTags: ['ROS2', 'C++', 'SLAM'], githubUrl: 'https://github.com' },
   ],
+  u_merve: [
+    { id: 'pr6', title: 'CampusConnect UI Kit', role: 'UI/UX Designer', description: 'Mobil uygulama için Figma design system ve prototip.', techTags: ['Figma', 'Design System', 'Prototyping'], demoUrl: 'https://figma.com' },
+  ],
+  u_alp: [
+    { id: 'pr7', title: 'SecureVault CTF', role: 'Security Researcher', description: 'Web uygulama güvenlik açığı tespit aracı.', techTags: ['Python', 'Burp Suite', 'OWASP'], githubUrl: 'https://github.com' },
+  ],
 };
 
 export const MILESTONES: Record<string, { id: string; title: string; description?: string; occurredOn: string; congratsCount: number; congratulatedByMe: boolean }[]> = {
   [ME_ID]: [
     { id: 'm1', title: 'Microsoft staj kabulü 🎉', description: 'Yaz dönemi SWE intern.', occurredOn: days(40), congratsCount: 128, congratulatedByMe: false },
     { id: 'm2', title: 'İTÜ ACM yönetim kuruluna seçildim', occurredOn: days(150), congratsCount: 64, congratulatedByMe: false },
+    { id: 'm4', title: 'Hackathon birinciliği 🏆', description: 'İTÜ ACM Hackathon 2026 — AI kategorisi.', occurredOn: days(90), congratsCount: 96, congratulatedByMe: false },
   ],
   u_zeynep: [
     { id: 'm3', title: 'NeurIPS atölye kabulü', description: 'İlk akademik yayın.', occurredOn: days(20), congratsCount: 210, congratulatedByMe: true },
@@ -1078,6 +1321,10 @@ export const OPPORTUNITIES = [
   { id: 'op2', title: 'Veri Bilimi Bursu', type: 'scholarship', company: 'Türkiye Açık Kaynak Platformu', location: 'Uzaktan', description: 'Açık kaynak veri projelerine katkı veren öğrencilere burs.', deadline: inDays(30), applyUrl: 'https://example.com' },
   { id: 'op3', title: 'Donanım Tasarım Stajı', type: 'internship', company: 'ASELSAN', location: 'Ankara', description: 'PCB ve gömülü sistemler ekibinde staj imkânı.', deadline: inDays(21), applyUrl: 'https://example.com' },
   { id: 'op4', title: 'Araştırma Asistanlığı', type: 'research', company: 'İTÜ Yapay Zekâ Lab', location: 'Ayazağa', description: 'NLP projesinde part-time araştırma asistanı.', deadline: inDays(10), applyUrl: 'https://example.com' },
+  { id: 'op5', title: 'Frontend Developer Stajı', type: 'internship', company: 'Trendyol', location: 'İstanbul / Hibrit', description: 'React Native ve web ekibinde yaz stajı. 3. sınıf ve üzeri.', deadline: inDays(18), applyUrl: 'https://example.com' },
+  { id: 'op6', title: 'Google Developer Scholarship', type: 'scholarship', company: 'Google', location: 'Uzaktan', description: 'Android ve Cloud geliştirme burs programı. Sertifika + mentorluk.', deadline: inDays(25), applyUrl: 'https://example.com' },
+  { id: 'op7', title: 'Part-time Barista', type: 'part_time', company: 'Nero Cafe Maslak', location: 'Maslak', description: 'Öğrenciye uygun vardiya, esnek saatler. Haftada min. 15 saat.', deadline: inDays(7), applyUrl: 'https://example.com' },
+  { id: 'op8', title: 'ML Engineer Intern', type: 'internship', company: 'Insider', location: 'İstanbul', description: 'Öneri sistemleri ve NLP projelerinde stajyer aranıyor.', deadline: inDays(12), applyUrl: 'https://example.com' },
 ];
 
 // ---- Takip istekleri (Instagram tarzı) ----
@@ -1085,6 +1332,8 @@ export const FOLLOW_REQUESTS = [
   { followerId: 'u_elif', createdAt: hrs(2) },
   { followerId: 'u_deniz', createdAt: hrs(5) },
   { followerId: 'u_burak', createdAt: hrs(18) },
+  { followerId: 'u_merve', createdAt: hrs(8) },
+  { followerId: 'u_alp', createdAt: hrs(14) },
 ];
 
 // ---- Trend konular (hashtag değil) ----
@@ -1117,16 +1366,26 @@ export const HASHTAGS = [
 
 // ---- Yorumlar (öne çıkan gönderiler için) ----
 export const COMMENTS: Record<string, { author: string; content: string; ageMin: number; likeCount: number }[]> = {
-  p1: [
+  p7: [
     { author: 'u_mert', content: 'Gömülü tarafı için varım, takıma yazın!', ageMin: 12, likeCount: 8 },
     { author: 'u_ada', content: 'Sunum/PM rolü lazımsa ben buradayım 🙌', ageMin: 9, likeCount: 5 },
     { author: ME_ID, content: 'Full-stack 1 kişi daha arıyoruz, DM 👀', ageMin: 4, likeCount: 12 },
   ],
-  p2: [
+  p8: [
     { author: 'u_elif', content: 'Bu kareyi duvar kağıdı yaptım resmen 😍', ageMin: 40, likeCount: 22 },
     { author: 'u_can', content: 'Maslak gün batımı = İstanbul\'un en iyi sırrı', ageMin: 30, likeCount: 14 },
   ],
-  p9: [
+  p1: [
+    { author: 'u_zeynep', content: 'Beta testçisi olmak isterim! DM atıyorum', ageMin: 5, likeCount: 8 },
+    { author: 'u_oguz', content: 'Expo Router ile mi yaptınız? Çok temiz görünüyor', ageMin: 3, likeCount: 6 },
+    { author: 'u_merve', content: 'UI mockup\'ları da hazır, birlikte çalışalım 🎨', ageMin: 2, likeCount: 11 },
+  ],
+  p4: [
+    { author: 'u_zeynep', content: 'Tebrikler! Seattle\'da görüşürüz 🎉', ageMin: 30, likeCount: 24 },
+    { author: 'org_acm', content: 'Gurur duyuyoruz! ACM ailesi olarak 👏', ageMin: 25, likeCount: 18 },
+    { author: 'u_selin', content: 'Harika haber, kutlarım!', ageMin: 20, likeCount: 9 },
+  ],
+  p15: [
     { author: 'u_irem', content: 'O kedi resmen kampüsün maskotu 😹', ageMin: 60, likeCount: 33 },
     { author: 'u_ece', content: 'Sınav stresine birebir 🐈', ageMin: 45, likeCount: 9 },
   ],
@@ -1138,4 +1397,7 @@ export const SUGGESTIONS = [
   { id: 'u_selin', username: 'selinarslan', displayName: 'Selin Arslan', avatarUrl: av(20), careerHeadline: 'İşletme Müh. Öğrencisi', department: 'İşletme Mühendisliği', mutualCount: 8, reason: '8 ortak bağlantı' },
   { id: 'u_deniz', username: 'denizkoc', displayName: 'Deniz Koç', avatarUrl: av(60), careerHeadline: 'Gemi İnşaatı Müh.', department: 'Gemi İnşaatı', mutualCount: 5, reason: 'Aynı dönem' },
   { id: 'u_ece', username: 'eceyilmaz', displayName: 'Ece Yılmaz', avatarUrl: av(24), careerHeadline: 'Fizik Mühendisliği', department: 'Fizik Mühendisliği', mutualCount: 3, reason: 'Senin gibi yeni' },
+  { id: 'u_oguz', username: 'oguztan', displayName: 'Oğuz Tan', avatarUrl: av(41), careerHeadline: 'GDSC Lead · Bilgisayar Müh.', department: 'Bilgisayar Mühendisliği', mutualCount: 15, reason: 'GDSC üzerinden' },
+  { id: 'u_merve', username: 'merveaksoy', displayName: 'Merve Aksoy', avatarUrl: av(26), careerHeadline: 'UX/UI Tasarımcı', department: 'Endüstri Ürünleri Tasarımı', mutualCount: 6, reason: 'CampusConnect projesi' },
+  { id: 'u_alp', username: 'alpkara', displayName: 'Alp Kara', avatarUrl: av(58), careerHeadline: 'Siber Güvenlik', department: 'Bilgisayar Mühendisliği', mutualCount: 9, reason: 'ACM & CTF' },
 ];

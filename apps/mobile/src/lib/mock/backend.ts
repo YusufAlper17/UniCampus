@@ -374,14 +374,31 @@ function toCommunity(c: (typeof COMMUNITIES)[number]): Community {
   };
 }
 
+const channelUnread: Record<string, number> = { c_acm_duyurular: 2, c_acm_sohbet: 1, c_ai_duyurular: 1, c_kariyer_duyurular: 3 };
+
 function communityDetail(c: (typeof COMMUNITIES)[number]): CommunityDetail {
   const status = myCommunityStatus.get(c.id) ?? 'none';
   const role = c.ownerId === ME_ID ? 'owner' : status === 'active' ? 'member' : null;
+  const channels = (c.channels as CommunityChannel[]).map((ch) => {
+    const msgs = channelMsgs[ch.id];
+    const last = msgs?.length ? msgs[msgs.length - 1] : undefined;
+    return {
+      ...ch,
+      lastMessage: last
+        ? {
+            content: last.content ?? '📷 Medya',
+            senderName: usersById.get(last.senderId)?.displayName,
+            createdAt: last.createdAt,
+          }
+        : undefined,
+      unreadCount: channelUnread[ch.id] ?? 0,
+    };
+  });
   return {
     ...toCommunity(c),
     viewerRole: role,
     viewerStatus: status,
-    channels: c.channels as CommunityChannel[],
+    channels,
   };
 }
 
@@ -816,6 +833,14 @@ export async function handleMock<T>(
   if (seg[0] === 'communities' && seg[2] === 'members') {
     const c = COMMUNITIES.find((x) => x.id === seg[1]);
     return r({ items: c ? communityMembers(c) : [] });
+  }
+  if (seg[0] === 'communities' && seg[2] === 'posts') {
+    const c = COMMUNITIES.find((x) => x.id === seg[1]);
+    if (!c) return r({ items: [], nextCursor: null });
+    const memberIds = new Set<string>([c.ownerId, ...c.members]);
+    const list = feedPosts.filter((p) => memberIds.has(p.authorId));
+    const { items, nextCursor } = page(list, q.get('cursor'), 10);
+    return r({ items: items.map(withAuthor), nextCursor });
   }
   if (seg[0] === 'communities' && seg[2] === 'requests') {
     return r({ items: [] });

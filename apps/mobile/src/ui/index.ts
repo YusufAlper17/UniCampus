@@ -1,4 +1,5 @@
 export { Text } from './Text.js';
+export { Wordmark } from './Wordmark.js';
 export { Screen } from './Screen.js';
 export { Button } from './Button.js';
 export { IconButton } from './IconButton.js';
@@ -34,7 +35,17 @@ export { JoinButton } from './JoinButton.js';
 export { MemberRoleBadge } from './MemberRoleBadge.js';
 export { CommunityCard } from './CommunityCard.js';
 export { AcademicInfoCard } from './AcademicInfoCard.js';
-export { ProfileAcademicGrid } from './ProfileAcademicGrid.js';
-export { ProfileCommunities } from './ProfileCommunities.js';
+export {
+  ProfileHeader,
+  ProfileStatsRow,
+  ProfileMetaStrip,
+  ProfileCommunitiesRow,
+  ProfileContentTabs,
+  ProfilePostGrid,
+  ProfileScreenSkeleton,
+  type ProfileContentTab,
+  type ProfileHeaderProps,
+  type ProfileTabItem,
+} from './profile/index.js';
 export { InviteLinkSheet } from './InviteLinkSheet.js';
 export { SettingRow, SettingSwitch, OptionPicker } from './SettingRow.js';

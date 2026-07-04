@@ -257,6 +257,13 @@ export interface CommunityChannel {
   writeMinRole: MemberRole;
   slowModeSeconds: number;
   createdAt: ISODateString;
+  /** Liste önizlemesi — son mesaj (WhatsApp tarzı kanal listesi için). */
+  lastMessage?: {
+    content: string;
+    senderName?: string;
+    createdAt: ISODateString;
+  };
+  unreadCount?: number;
 }
 
 export interface ChannelMessage {

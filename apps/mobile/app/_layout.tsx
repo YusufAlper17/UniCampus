@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts, Pacifico_400Regular } from '@expo-google-fonts/pacifico';
 import { ThemeProvider } from '../src/lib/theme.js';
 import { ToastProvider } from '../src/ui/Toast.js';
 import { useAuthStore } from '../src/lib/auth-store.js';
@@ -25,12 +26,13 @@ const queryClient = new QueryClient({
 export default function RootLayout() {
   const hydrate = useAuthStore((s) => s.hydrate);
   const [ready, setReady] = useState(false);
+  const [fontsLoaded] = useFonts({ Pacifico_400Regular });
 
   useEffect(() => {
     void hydrate().finally(() => setReady(true));
   }, [hydrate]);
 
-  if (!ready) return null;
+  if (!ready || !fontsLoaded) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

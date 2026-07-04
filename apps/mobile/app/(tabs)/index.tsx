@@ -9,7 +9,7 @@ import {
   type InfiniteData,
 } from '@tanstack/react-query';
 import type { EventData, FeedItem, PollData, StoryGroup } from '@unicampus/shared-types';
-import { Text } from '../../src/ui/Text.js';
+import { Wordmark } from '../../src/ui/Wordmark.js';
 import { EmptyState } from '../../src/ui/EmptyState.js';
 import { PostCard } from '../../src/ui/PostCard.js';
 import { AdCard } from '../../src/ui/AdCard.js';
@@ -168,9 +168,7 @@ export default function HomeFeed() {
           paddingVertical: spacing[2],
         }}
       >
-        <Text variant="headingLg" tone="brand" weight="800">
-          UniCampus
-        </Text>
+        <Wordmark size={24} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[2] }}>
           <IconButton name="play-circle-outline" onPress={() => router.push('/reels')} />
           <IconButton name="heart-outline" badge={followReqCount} onPress={() => router.push('/follow-requests')} />

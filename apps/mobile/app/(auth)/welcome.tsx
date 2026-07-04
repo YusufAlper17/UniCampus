@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '../../src/ui/Screen.js';
 import { Text } from '../../src/ui/Text.js';
+import { Wordmark } from '../../src/ui/Wordmark.js';
 import { Button } from '../../src/ui/Button.js';
 import { useTheme } from '../../src/lib/theme.js';
 
@@ -29,9 +30,7 @@ export default function Welcome() {
         >
           <Ionicons name="school" size={52} color="#FFFFFF" />
         </View>
-        <Text variant="headingXl" center>
-          UniCampus
-        </Text>
+        <Wordmark size={34} />
         <Text tone="muted" center style={{ maxWidth: 300 }}>
           Kampüsün nabzı tek yerde: paylaş, etkinliklere katıl, toplulukları keşfet. Sadece doğrulanmış öğrenciler.
         </Text>

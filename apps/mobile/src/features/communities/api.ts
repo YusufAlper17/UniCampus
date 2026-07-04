@@ -46,6 +46,14 @@ export function getMembers(id: string) {
   return api.get<{ items: CommunityMember[] }>(`/communities/${id}/members`);
 }
 
+export function getCommunityPosts(id: string, cursor?: string | null) {
+  const params = new URLSearchParams();
+  if (cursor) params.set('cursor', cursor);
+  return api.get<{ items: import('@unicampus/shared-types').Post[]; nextCursor: string | null }>(
+    `/communities/${id}/posts?${params.toString()}`,
+  );
+}
+
 export interface PendingRequest {
   userId: string;
   username: string;

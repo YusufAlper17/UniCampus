@@ -1,46 +1,56 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Text } from '../../src/ui/Text.js';
-import { Avatar } from '../../src/ui/Avatar.js';
-import { Badge } from '../../src/ui/Badge.js';
+import {
+  ProfileHeader,
+  ProfileStatsRow,
+  ProfileMetaStrip,
+  ProfileCommunitiesRow,
+  ProfileContentTabs,
+  ProfilePostGrid,
+  ProfileScreenSkeleton,
+  type ProfileContentTab,
+} from '../../src/ui/profile/index.js';
 import { FollowButton, type FollowState } from '../../src/ui/FollowButton.js';
-import { Skeleton } from '../../src/ui/Skeleton.js';
 import { ProjectCard } from '../../src/ui/ProjectCard.js';
 import { MilestoneCard } from '../../src/ui/MilestoneCard.js';
-import { ProfileAcademicGrid } from '../../src/ui/ProfileAcademicGrid.js';
-import { ProfileCommunities } from '../../src/ui/ProfileCommunities.js';
 import { useToast } from '../../src/ui/Toast.js';
 import { useTheme } from '../../src/lib/theme.js';
-import { getProfile } from '../../src/features/users/api.js';
+import { getProfile, getUserPosts } from '../../src/features/users/api.js';
 import { congratulateMilestone, getUserMilestones, getUserProjects } from '../../src/features/career/api.js';
 import { followUser, unfollowUser } from '../../src/features/social/api.js';
 import { addCloseFriend, getCloseFriends, removeCloseFriend } from '../../src/features/stories/api.js';
 import { createConversation } from '../../src/features/messaging/api.js';
 
-const ACCOUNT_TYPE_BADGE: Record<string, { label: string; icon: 'people' | 'shield' } | undefined> = {
-  club: { label: 'Kulüp', icon: 'people' },
-  team: { label: 'Takım', icon: 'shield' },
+const ACCOUNT_TYPE_LABEL: Record<string, string | undefined> = {
+  club: 'Kulüp hesabı',
+  team: 'Takım hesabı',
 };
 
 export default function UserProfile() {
   const { username } = useLocalSearchParams<{ username: string }>();
-  const { theme, spacing } = useTheme();
+  const { theme, spacing, radius } = useTheme();
   const toast = useToast();
   const router = useRouter();
   const qc = useQueryClient();
+  const [tab, setTab] = useState<ProfileContentTab>('posts');
+  const [followState, setFollowState] = useState<FollowState>('none');
+  const [busy, setBusy] = useState(false);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['profile', username],
     queryFn: () => getProfile(username),
   });
 
-  const [followState, setFollowState] = useState<FollowState>('none');
-  const [busy, setBusy] = useState(false);
-
   const user = data?.user;
+
+  const postsQuery = useQuery({
+    queryKey: ['user-posts', user?.id],
+    queryFn: () => getUserPosts(user!.id),
+    enabled: !!user,
+  });
 
   const projectsQuery = useQuery({
     queryKey: ['projects', user?.id],
@@ -56,6 +66,11 @@ export default function UserProfile() {
 
   const closeFriendsQuery = useQuery({ queryKey: ['close-friends'], queryFn: getCloseFriends });
   const isCloseFriend = !!user && (closeFriendsQuery.data?.items.some((f) => f.userId === user.id) ?? false);
+
+  const posts = postsQuery.data?.items ?? [];
+  const projects = projectsQuery.data?.items ?? [];
+  const milestones = milestonesQuery.data?.items ?? [];
+  const hasProjectsTab = projects.length > 0 || milestones.length > 0;
 
   async function congrats(id: string) {
     if (!user) return;
@@ -114,114 +129,103 @@ export default function UserProfile() {
     }
   }
 
+  const iconBtn = (icon: keyof typeof Ionicons.glyphMap, onPress: () => void, active?: boolean) => (
+    <Pressable
+      onPress={onPress}
+      disabled={busy}
+      style={{
+        width: 44,
+        height: 44,
+        borderRadius: radius.md,
+        borderWidth: 1,
+        borderColor: active ? theme.success : theme.border,
+        backgroundColor: active ? theme.success + '18' : 'transparent',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Ionicons name={icon} size={20} color={active ? theme.success : theme.textPrimary} />
+    </Pressable>
+  );
+
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: theme.bg }} contentContainerStyle={{ padding: spacing[3], gap: spacing[3] }}>
-      <Stack.Screen options={{ title: user ? `@${user.username}` : '', headerShown: true }} />
+    <ScrollView
+      style={{ flex: 1, backgroundColor: theme.bg }}
+      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+      contentContainerStyle={{ paddingBottom: spacing[4] }}
+    >
+      <Stack.Screen options={{ title: user ? user.displayName : '', headerShown: true }} />
+
       {isLoading || !user ? (
-        <View style={{ gap: 16 }}>
-          <Skeleton width={84} height={84} radius={42} />
-          <Skeleton height={18} width="50%" />
-          <Skeleton height={14} width="70%" />
-        </View>
+        <ProfileScreenSkeleton />
       ) : (
         <>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing[3] }}>
-            <Avatar uri={user.avatarUrl} name={user.displayName} size={84} verified={user.isVerifiedStudent} />
-            <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-around' }}>
-              <Stat label="Gönderi" value={user.postCount} />
-              <Stat label="Takipçi" value={user.followerCount} />
-              <Stat label="Takip" value={user.followingCount ?? 0} />
-            </View>
-          </View>
-
-          <View style={{ gap: 4 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text variant="headingMd">{user.displayName}</Text>
-              {user.accountVisibility === 'private' ? (
-                <Ionicons name="lock-closed" size={14} color={theme.textMuted} />
-              ) : null}
-              {ACCOUNT_TYPE_BADGE[user.type] ? (
-                <Badge
-                  label={ACCOUNT_TYPE_BADGE[user.type]!.label}
-                  tone="info"
-                  icon={ACCOUNT_TYPE_BADGE[user.type]!.icon}
-                />
-              ) : null}
-            </View>
-            {user.careerHeadline ? <Badge label={user.careerHeadline} tone="brand" icon="briefcase" /> : null}
-            {user.statusText ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                {user.statusEmoji ? <Text>{user.statusEmoji}</Text> : null}
-                <Text tone="secondary">{user.statusText}</Text>
-              </View>
-            ) : null}
-            {user.bio ? <Text tone="secondary">{user.bio}</Text> : null}
-          </View>
-
-          {data?.academic ? <ProfileAcademicGrid academic={data.academic} /> : null}
-
-          {data?.featuredCommunities?.length ? (
-            <ProfileCommunities
-              communities={data.featuredCommunities}
-              onPress={(id) => router.push(`/community/${id}`)}
-            />
-          ) : null}
-
-          <View style={{ flexDirection: 'row', gap: spacing[2] }}>
-            <FollowButton state={followState} onPress={onFollow} loading={busy} />
-            <Pressable
-              onPress={onMessage}
-              disabled={busy}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: theme.border,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Ionicons name="chatbubble-outline" size={20} color={theme.textPrimary} />
-            </Pressable>
-            <Pressable
-              onPress={toggleCloseFriend}
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: isCloseFriend ? theme.success : theme.border,
-                backgroundColor: isCloseFriend ? theme.success + '18' : 'transparent',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Ionicons
-                name={isCloseFriend ? 'star' : 'star-outline'}
-                size={20}
-                color={isCloseFriend ? theme.success : theme.textPrimary}
+          <ProfileHeader
+            displayName={user.displayName}
+            username={user.username}
+            avatarUrl={user.avatarUrl}
+            verified={user.isVerifiedStudent}
+            isPrivate={user.accountVisibility === 'private'}
+            careerHeadline={user.careerHeadline}
+            statusText={user.statusText}
+            statusEmoji={user.statusEmoji}
+            bio={user.bio}
+            subtitle={ACCOUNT_TYPE_LABEL[user.type]}
+            footer={
+              <ProfileStatsRow
+                postCount={user.postCount}
+                followerCount={user.followerCount}
+                followingCount={user.followingCount ?? 0}
               />
-            </Pressable>
+            }
+            actions={
+              <View style={{ flexDirection: 'row', gap: spacing[2], alignItems: 'center' }}>
+                <View style={{ flex: 1 }}>
+                  <FollowButton state={followState} onPress={onFollow} loading={busy} />
+                </View>
+                {iconBtn('chatbubble-outline', onMessage)}
+                {iconBtn(isCloseFriend ? 'star' : 'star-outline', toggleCloseFriend, isCloseFriend)}
+              </View>
+            }
+          />
+
+          <View style={{ paddingHorizontal: spacing[3], gap: spacing[3], marginTop: spacing[3] }}>
+            {data?.academic ? <ProfileMetaStrip academic={data.academic} /> : null}
+
+            {data?.featuredCommunities?.length ? (
+              <ProfileCommunitiesRow
+                communities={data.featuredCommunities}
+                onPress={(id) => router.push(`/community/${id}`)}
+              />
+            ) : null}
           </View>
 
-          {projectsQuery.data?.items.length ? (
-            <View style={{ gap: spacing[2], marginTop: spacing[2] }}>
-              <Text variant="caption" tone="muted">
-                Projeler
-              </Text>
-              {projectsQuery.data.items.map((p) => (
+          <ProfileContentTabs
+            tabs={
+              hasProjectsTab
+                ? [
+                    { id: 'posts', icon: 'grid-outline' },
+                    { id: 'projects', icon: 'briefcase-outline' },
+                  ]
+                : [{ id: 'posts', icon: 'grid-outline' }]
+            }
+            active={tab}
+            onChange={setTab}
+          />
+
+          {tab === 'posts' ? (
+            <ProfilePostGrid
+              posts={posts}
+              onPostPress={(id) => router.push(`/post/${id}`)}
+              emptyTitle="Henüz gönderi yok"
+              emptyDescription="Bu kullanıcı henüz paylaşım yapmamış."
+            />
+          ) : (
+            <View style={{ paddingHorizontal: spacing[3], gap: spacing[3], paddingTop: spacing[3] }}>
+              {projects.map((p) => (
                 <ProjectCard key={p.id} project={p} onPress={() => router.push(`/project/${p.id}`)} />
               ))}
-            </View>
-          ) : null}
-
-          {milestonesQuery.data?.items.length ? (
-            <View style={{ gap: spacing[2], marginTop: spacing[2] }}>
-              <Text variant="caption" tone="muted">
-                Kilometre Taşları
-              </Text>
-              {milestonesQuery.data.items.map((m) => (
+              {milestones.map((m) => (
                 <MilestoneCard
                   key={m.id}
                   milestone={m}
@@ -231,20 +235,9 @@ export default function UserProfile() {
                 />
               ))}
             </View>
-          ) : null}
+          )}
         </>
       )}
     </ScrollView>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <View style={{ alignItems: 'center' }}>
-      <Text variant="headingMd">{value}</Text>
-      <Text variant="caption" tone="muted">
-        {label}
-      </Text>
-    </View>
   );
 }
