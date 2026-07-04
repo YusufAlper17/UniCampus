@@ -1,5 +1,5 @@
 {
-  "installCommand": "cd ../.. && npm install",
-  "buildCommand": "cd ../.. && npm run build --workspace=@unicampus/portfolio",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
   "framework": "nextjs"
 }
