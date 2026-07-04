@@ -1,0 +1,17 @@
+{
+  "installCommand": "npm install",
+  "buildCommand": "npm run export:web --workspace=@unicampus/mobile",
+  "outputDirectory": "apps/mobile/dist",
+  "framework": null,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors *"
+        }
+      ]
+    }
+  ]
+}
